@@ -1,0 +1,3 @@
+- [ ] What is spread segment?
+  - in spread.conf there is Spread_Segment defined. What is it?
+- [ ] Now the messages are only sent to the sender itself. Why?

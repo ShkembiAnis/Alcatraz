@@ -26,6 +26,7 @@ USER alcatraz
 # copy project files
 WORKDIR /server
 COPY ./server ./server
+COPY ./lib ./lib
 COPY ./Makefile ./Makefile
 COPY ./spread.conf ./spread.conf
 
