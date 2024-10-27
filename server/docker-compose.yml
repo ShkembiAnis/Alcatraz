@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  s1:
+    container_name: s1
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+  s2:
+    container_name: s2
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+
+networks:
+  local:
+    driver: host
