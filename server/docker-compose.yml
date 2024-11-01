@@ -1,6 +1,7 @@
 name: server-group
 
 services:
+
   s1:
     container_name: s1
     build:
@@ -11,8 +12,7 @@ services:
         ipv4_address: ${SPREAD_SERVER_1_IP}
     environment:
       - SPREAD_IP=${SPREAD_SERVER_1_IP}
-    
-
+      - SERVER_ID=1
 
   s2:
     container_name: s2
@@ -20,11 +20,24 @@ services:
       context: .
       dockerfile: Dockerfile
     networks:
-      # network2:
       network1:
         ipv4_address: ${SPREAD_SERVER_2_IP}
     environment:
       - SPREAD_IP=${SPREAD_SERVER_2_IP}
+      - SERVER_ID=2
+
+  s_test:
+    container_name: s_test
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      network1:
+        ipv4_address: ${SPREAD_SERVER_TEST_IP}
+    environment:
+      - SPREAD_IP=${SPREAD_SERVER_TEST_IP}
+      - SERVER_ID=3
+    command: spread -c ./spread.conf > /dev/null 2>&1
 
 networks:
   network1:
@@ -32,9 +45,3 @@ networks:
     ipam:
       config:
         - subnet: 192.168.1.0/24
-
-# network2:
-#   driver: bridge
-#   ipam:
-#     config:
-#       - subnet: 192.168.2.0/24
