@@ -1,4 +1,3 @@
-# Ubunut
 FROM ubuntu:latest
 
 # add 32 bit architecure support

@@ -1,6 +1,5 @@
 package server;
 
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import spread.*;
 
@@ -32,7 +31,7 @@ public class Main {
       // connection.connect(inetAddress, 4803, "albert", false, false);
       connection.connect(spreadIP, 4803, spreadIPStr, true, true);
     } catch (Exception e) {
-      System.out.println("Connection Error");
+      System.out.println("Connection Error" + e.toString());
       System.exit(1);
     }
 
