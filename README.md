@@ -6,9 +6,7 @@ Java - 21
 
 
 
-# Client 
-
-Interfaces: 
+# Client - Interfaces 
 
 # startGame(lobbyId Long, List <clients>); Boolean
 
@@ -19,7 +17,7 @@ List <clients>: a list of clients, a client hold the following attributes: ip_ad
 
 @return - a Boolean which tells us
 
-# doMove(playerName String, move Move); Boolean 
+# doMove(playerName String, move Move); Boolean
 
 description: this function proccess the move but doesn't (execute) the move. It check if the move is possible. 
 
