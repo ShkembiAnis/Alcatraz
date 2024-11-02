@@ -4,8 +4,6 @@ JDK - 21
 Java - 21
 
 
-
-
 # Client - Interfaces 
 
 # startGame(lobbyId Long, List <clients>); Boolean
