@@ -1,4 +1,4 @@
-package server;
+package server.server_impl;
 
 public interface ServerServer {
     void electNewPrimary();

@@ -1,6 +1,6 @@
 # RUN without docker
 compile:
-	javac -cp ./lib/spread-4.0.0-api.jar -d ./target ./server/Main.java
+	javac -cp ./lib/spread-4.0.0-api.jar -d ./target $$(find ./server -name "*.java")
 
 run:
 	java -cp ./target:./lib/spread-4.0.0-api.jar server.Main
