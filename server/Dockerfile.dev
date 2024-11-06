@@ -1,0 +1,23 @@
+FROM ubuntu:latest
+
+# add 32 bit architecure support
+RUN dpkg --add-architecture i386
+RUN apt update
+RUN apt install -y libc6:i386 libstdc++6:i386
+
+# copy spread files
+WORKDIR /spread_bin
+COPY ./deps/spread-bin-4.0.0/ .
+
+# install spread
+RUN apt install -y make
+RUN apt install -y binutils
+RUN make install
+
+# install java
+RUN apt update && \
+  apt install -y openjdk-21-jdk
+
+# add user and switch to it
+RUN useradd -ms /bin/bash user
+USER user

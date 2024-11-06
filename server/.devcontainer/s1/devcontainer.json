@@ -1,0 +1,10 @@
+{
+  "name": "s1",
+  "dockerComposeFile": [
+    "../../docker-compose.dev.yml"
+  ],
+  "service": "s1",
+  "workspaceFolder": "/home/user/Alcatraz",
+  "shutdownAction": "stopCompose",
+  // "postAttachCommand": "spread -c ./spread.conf > /dev/null 2>&1 &"
+}

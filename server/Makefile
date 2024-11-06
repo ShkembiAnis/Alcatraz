@@ -24,3 +24,8 @@ doc-it: doc-build doc-interactive
 # RUN a collection of servers
 doc-collection:
 	docker compose up --build
+
+
+# run spread
+spread:
+	spread -c ./spread.conf > /dev/null 2>&1 &

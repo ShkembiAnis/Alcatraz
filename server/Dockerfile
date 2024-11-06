@@ -19,8 +19,8 @@ RUN apt update && \
   apt install -y openjdk-21-jdk
 
 # add user and switch to it
-RUN useradd -ms /bin/bash alcatraz
-USER alcatraz
+RUN useradd -ms /bin/bash user
+USER user
 
 # copy project files
 WORKDIR /server

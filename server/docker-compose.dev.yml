@@ -1,42 +1,61 @@
-name: prod-servers
+name: dev-servers
 
 services:
 
   s1:
-    container_name: s1
+    container_name: s1-dev
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     networks:
       network1:
         ipv4_address: ${SPREAD_SERVER_1_IP}
     environment:
       - SPREAD_IP=${SPREAD_SERVER_1_IP}
       - SERVER_ID=1
+    volumes:
+      - ..:/home/user/Alcatraz
+    command: >
+      sh -c "
+        while sleep 1000; do :; done
+      "
+
 
   s2:
-    container_name: s2
+    container_name: s2-dev
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     networks:
       network1:
         ipv4_address: ${SPREAD_SERVER_2_IP}
     environment:
       - SPREAD_IP=${SPREAD_SERVER_2_IP}
       - SERVER_ID=2
+    volumes:
+      - ..:/home/user/Alcatraz
+    command: >
+      sh -c "
+        while sleep 1000; do :; done
+      "
 
   s3:
-    container_name: s3
+    container_name: s3-dev
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     networks:
       network1:
         ipv4_address: ${SPREAD_SERVER_3_IP}
     environment:
       - SPREAD_IP=${SPREAD_SERVER_3_IP}
       - SERVER_ID=3
+    volumes:
+      - ..:/home/user/Alcatraz
+    command: >
+      sh -c "
+        while sleep 1000; do :; done
+      "
 
 networks:
   network1:
