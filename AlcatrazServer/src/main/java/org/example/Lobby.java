@@ -40,7 +40,12 @@ public class Lobby implements Serializable {
         }
     }
 
-    public void removePlayer(String clientName) {
+    public boolean removePlayer(String clientName) {
         this.players.remove(clientName);
+        if (this.players.get(clientName) == null) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
