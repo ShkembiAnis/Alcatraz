@@ -31,4 +31,8 @@ public class Player implements Serializable {
     public String getPort() {
         return this.port;
     }
+
+    public ClientInterface getClient() {
+        return this.client;
+    }
 }
