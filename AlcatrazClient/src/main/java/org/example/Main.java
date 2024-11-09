@@ -13,7 +13,7 @@ public class Main {
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
             ServerInterface server = (ServerInterface) registry.lookup("Alcatraz");
-            //Lobby currentlobby = null;
+            // Lobby currentlobby = null;
 
             /**
              * Start of User interaction
@@ -29,36 +29,42 @@ public class Main {
              * 2. createLobby
              */
 
-            while(true){
+            while (true) {
                 System.out.println("Menu1:  (1)showAvailableLobbies (2)createLobby");
                 String menu1Input = scanner.nextLine();
-                switch (menu1Input){
+                switch (menu1Input) {
                     case "1":
                         System.out.println("Show available Lobbies...\nListing lobbies:");
                         Map<Long, Lobby> lobbies = server.getLobbies();
                         for (Map.Entry<Long, Lobby> entry : lobbies.entrySet()) {
                             Lobby lobbyEntry = entry.getValue(); // The value (List<String>)
-                            System.out.println("Lobby: " + lobbyEntry.getId() + " Players: " + lobbyEntry.getPlayers().size() + " ownerId:" + lobbyEntry.getOwner());
+                            System.out.println("Lobby: " + lobbyEntry.getId() + " Players: "
+                                    + lobbyEntry.getPlayers().size() + " ownerId:" + lobbyEntry.getOwner());
                         }
                         System.out.println("Enter a lobbyID, to join a lobby (enter 0 to exit Lobby-List)");
                         String joinLobbyIdInput = scanner.nextLine();
-                        if(server.joinLobby(clientName, Long.valueOf(joinLobbyIdInput))){
-                            System.out.println("Lobby" + lobbies.get(Long.valueOf(joinLobbyIdInput)).getId() + " joined.");
+                        if (server.joinLobby(clientName, Long.valueOf(joinLobbyIdInput))) {
+                            System.out.println(
+                                    "Lobby" + lobbies.get(Long.valueOf(joinLobbyIdInput)).getId() + " joined.");
                             System.out.println("Waiting For Game Start...");
 
                             /**
                              * Guest Menu
                              */
 
-                            System.out.println("Players:" + (lobbies.get(Long.valueOf(joinLobbyIdInput)).getPlayers().size()+1) + " LobbyId:" + lobbies.get(Long.valueOf(joinLobbyIdInput)).getId());
-                            System.out.println(" enter 0 exit");
-                            while (true){
+                            System.out.println(
+                                    "Players:" + (lobbies.get(Long.valueOf(joinLobbyIdInput)).getPlayers().size() + 1)
+                                            + " LobbyId:" + lobbies.get(Long.valueOf(joinLobbyIdInput)).getId());
+                            System.out.println(" (0) Exit or leave Lobby");
+                            while (true) {
                                 String wantsExitsQuestionmark = scanner.nextLine();
-                                if(wantsExitsQuestionmark.equals("0")){
+                                if (wantsExitsQuestionmark.equals("0")) {
+                                    server.leaveLobby(clientName, Long.valueOf(joinLobbyIdInput));
                                     break;
                                 }
+
                             }
-                        }else{
+                        } else {
                             System.out.println("Could not join lobby.");
                         }
 
@@ -74,7 +80,7 @@ public class Main {
 
                         System.out.println("Lobby Menu: (1) start game (0 exit Lobby)");
                         String ownerLobbyMenuInput = scanner.nextLine();
-                        switch (ownerLobbyMenuInput){
+                        switch (ownerLobbyMenuInput) {
                             case "1":
                                 server.initializeGameStart(lobby.getId());
                                 break;
@@ -85,26 +91,30 @@ public class Main {
                     default:
                         break;
                 }
+
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     private static String register_GetClientName(ServerInterface server) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
         String clientName = "";
-        while(true){
+        while (true) {
             clientName = scanner.nextLine();
             ClientInterface client = new Client(server, clientName);
-            if(server.registerPlayer(clientName, client)){
+            if (server.registerPlayer(clientName, client)) {
                 System.out.println(clientName + " registered");
                 break;
-            }else{
+            } else {
                 System.out.println("The Username " + clientName + " already exits.\nEnter your name:");
             }
+
         }
+
         return clientName;
     }
 }
