@@ -17,6 +17,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
         this.server = server;
         this.clientName = clientName;
     }
+
     protected Client() throws RemoteException {
     }
 
@@ -43,7 +44,6 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
         Game game = new Game(lobby);
         game.start();
 
-
     }
 
     private void startTurn() throws RemoteException {
@@ -63,4 +63,14 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
             player.receiveMove(move);
         }
     }
+
+    @Override
+    public void nextTurn() throws RemoteException {
+        // void nextTurn() throws RemoteException; // to notify the next player to star
+        // their turn
+        System.out.println("Next turn");
+        startTurn();
+
+    }
+
 }
