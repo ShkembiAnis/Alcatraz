@@ -19,7 +19,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         if(checkIfUsernameExists(playerName)) {
             return false;
         }else{
-
             players.put(playerName, new Player(client, playerName,"ip_address", "port"));
             System.out.println(playerName + " registered");
             System.out.println("Updated Players list: ");
@@ -58,6 +57,15 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
     @Override
     public void initializeGameStart(long lobbyId) throws RemoteException {
+        Lobby lobby = lobbyManager.getLobbyById(lobbyId);
+        lobby.getPlayers().forEach((key, value) -> {
+            try {
+                System.out.println("Starting game for client:" + value.getClientName()+ " in lobby" + lobby.getId()) ;
+                value.getClient().startGame(lobby);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
     }
 
