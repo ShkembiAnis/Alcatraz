@@ -16,11 +16,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
     @Override
     public boolean registerPlayer(String playerName, ClientInterface client) throws RemoteException {
-        if(checkIfUsernameExists(playerName)) {
+        if (checkIfUsernameExists(playerName)) {
             return false;
-        }else{
+        } else {
 
-            players.put(playerName, new Player(client, playerName,"ip_address", "port"));
+            players.put(playerName, new Player(client, playerName, "ip_address", "port"));
             System.out.println(playerName + " registered");
             System.out.println("Updated Players list: ");
             players.forEach((key, value) -> System.out.println(value.getClientName()));
@@ -32,8 +32,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     public Lobby createLobby(String clientName) throws RemoteException {
         lobbyIdCounter++;
         long lobbyId = lobbyIdCounter;
-        Map<String, Player> lobbyPlayers =  new HashMap<>();
-        lobbyPlayers.put(clientName,players.get(clientName));
+        Map<String, Player> lobbyPlayers = new HashMap<>();
+        lobbyPlayers.put(clientName, players.get(clientName));
         Lobby lobby = new Lobby(lobbyId, lobbyPlayers, clientName);
         lobbyManager.createLobby(lobbyId, lobby);
         System.out.println("Lobby created with ID: " + lobbyId + " by Player: " + clientName);
@@ -42,8 +42,9 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
     @Override
     public boolean joinLobby(String clientName, Long lobbyId) throws RemoteException {
-        if (lobbyManager.getLobbies().containsKey(lobbyId) && lobbyManager.getLobbyById(lobbyId).getPlayers().size() < 4) {
-            lobbyManager.addPlayerToLobby(lobbyId,players.get(clientName));
+        if (lobbyManager.getLobbies().containsKey(lobbyId)
+                && lobbyManager.getLobbyById(lobbyId).getPlayers().size() < 4) {
+            lobbyManager.addPlayerToLobby(lobbyId, players.get(clientName));
             System.out.println("Player " + clientName + " joined lobby " + lobbyId);
             return true;
         }
@@ -55,17 +56,22 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         return lobbyManager.getLobbies();
     }
 
-
     @Override
     public void initializeGameStart(long lobbyId) throws RemoteException {
 
+        Lobby lobby = lobbyManager.getLobbyById(lobbyId);
+        lobby.getPlayers().forEach((key, value) -> {
+            try {
+                value.getClient().startGame(lobby);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
-
-
-    private Boolean checkIfUsernameExists(String playerName){
+    private Boolean checkIfUsernameExists(String playerName) {
         for (String key : players.keySet()) {
-            if(playerName.equals(key)){
+            if (playerName.equals(key)) {
                 return true;
             }
         }
@@ -78,12 +84,18 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
      * @param playerId
      * @return true if player is not in a lobby, else false
      */
-    private  boolean isPlayerInAnyLobby(Map<Long, List<String>> lobbies, String playerId){
+    private boolean isPlayerInAnyLobby(Map<Long, List<String>> lobbies, String playerId) {
         for (List<String> players : lobbies.values()) {
             if (players.contains(playerId)) {
                 return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public void leaveLobby(String clientName, long lobbyId) throws RemoteException {
+        lobbyManager.removePlayerFromLobby(lobbyId, players.get(clientName));
+        System.out.println(clientName + " left lobby " + lobbyId);
     }
 }
