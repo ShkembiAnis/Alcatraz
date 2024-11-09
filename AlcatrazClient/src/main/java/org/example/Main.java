@@ -13,7 +13,7 @@ public class Main {
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
             ServerInterface server = (ServerInterface) registry.lookup("Alcatraz");
-            Lobby currentlobby = null;
+            //Lobby currentlobby = null;
 
             /**
              * Start of User interaction
@@ -76,7 +76,7 @@ public class Main {
                         String ownerLobbyMenuInput = scanner.nextLine();
                         switch (ownerLobbyMenuInput){
                             case "1":
-                                //server.initStartGame();
+                                server.initializeGameStart(lobby.getId());
                                 break;
                             case "0":
                                 break;

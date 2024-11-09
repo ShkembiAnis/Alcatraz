@@ -39,7 +39,11 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
     @Override
     public void startGame(Lobby lobby) throws RemoteException {
-        System.out.println("Game started" + lobby.getId());
+        System.out.println("Game started " + lobby.getId());
+        Game game = new Game(lobby);
+        game.start();
+
+
     }
 
     private void startTurn() throws RemoteException {
