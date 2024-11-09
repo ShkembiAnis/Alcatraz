@@ -6,9 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 public interface ServerInterface extends Remote {
-    boolean registerPlayer(String clientName, ClientInterface client) throws RemoteException;
+    boolean registerPlayer(String playerName, ClientInterface client) throws RemoteException;
+
     Lobby createLobby(String clientName) throws RemoteException;
+
     boolean joinLobby(String clientName, Long lobbyId) throws RemoteException;
+
     Map<Long, Lobby> getLobbies() throws RemoteException;
+
     void initializeGameStart(long lobbyId) throws RemoteException;
+
+    void leaveLobby(String clientName, long lobbyId) throws RemoteException;
+
 }
