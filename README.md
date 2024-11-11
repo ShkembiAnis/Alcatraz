@@ -4,6 +4,24 @@ JDK - 21
 Java - 21
 
 
+# HOW TO RUN
+0. Go to root project directory
+
+1. Build the whole project
+```shell
+mvn clean install
+```
+
+2. Run the server
+```shell
+java -jar ./server/target/server-0.0.1.jar
+```
+
+3. Run the client
+```shell
+java -jar ./client/target/client-0.0.1.jar
+```
+
 
 # Client - Interfaces 
 
