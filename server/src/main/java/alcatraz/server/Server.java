@@ -1,6 +1,9 @@
 package alcatraz.server;
 
-import shared.*;
+import alcatraz.shared.Player;
+import alcatraz.shared.ClientInterface;
+import alcatraz.shared.ServerInterface;
+import alcatraz.shared.Lobby;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
