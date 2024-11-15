@@ -2,7 +2,7 @@ package alcatraz.client;
 
 import java.rmi.RemoteException;
 
-import shared.Lobby;
+import alcatraz.shared.Lobby;
 
 public class Game {
     Lobby lobby;
@@ -17,6 +17,4 @@ public class Game {
             System.out.println(key + ": " + value.getClientName());
         });
     }
-
-
 }

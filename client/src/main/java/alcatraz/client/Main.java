@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import shared.ClientInterface;
-import shared.Lobby;
-import shared.ServerInterface;
+import alcatraz.shared.ClientInterface;
+import alcatraz.shared.Lobby;
+import alcatraz.shared.ServerInterface;
 
 public class Main {
     public static void main(String[] args) {

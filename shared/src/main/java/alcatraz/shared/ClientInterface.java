@@ -1,4 +1,4 @@
-package shared;
+package alcatraz.shared;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

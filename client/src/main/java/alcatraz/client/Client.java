@@ -5,10 +5,10 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 import java.util.Scanner;
 
-import shared.ClientInterface;
-import shared.Lobby;
-import shared.Player;
-import shared.ServerInterface;
+import alcatraz.shared.ClientInterface;
+import alcatraz.shared.Lobby;
+import alcatraz.shared.Player;
+import alcatraz.shared.ServerInterface;
 
 public class Client extends UnicastRemoteObject implements ClientInterface {
     private String clientId;

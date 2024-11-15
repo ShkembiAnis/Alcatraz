@@ -3,7 +3,7 @@
 // (powered by FernFlower decompiler)
 //
 
-package shared;
+package alcatraz.shared;
 
 import java.io.Serializable;
 import java.util.Map;

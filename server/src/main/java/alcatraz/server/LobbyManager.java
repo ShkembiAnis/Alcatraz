@@ -3,8 +3,8 @@ package alcatraz.server;
 import java.util.HashMap;
 import java.util.Map;
 
-import shared.Lobby;
-import shared.Player;
+import alcatraz.shared.Lobby;
+import alcatraz.shared.Player;
 
 public class LobbyManager {
     private Map<Long, Lobby> lobbies;
