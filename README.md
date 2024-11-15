@@ -4,6 +4,39 @@ JDK - 21
 Java - 21
 
 
+# HOW TO RUN
+0. Go to root project directory
+
+1. Install alcatraz-lib and spread in your local maven repository
+
+```shell
+mvn install:install-file -Dfile=./client/lib/alcatraz-lib.jar -DgroupId=alcatraz-lib -DartifactId=alcatraz-lib -Dversion=1.0 -Dpackaging=jar
+```
+  
+```shell
+mvn install:install-file -Dfile=./server/lib/spread-4.0.0-api.jar -DgroupId=spread -DartifactId=spread -Dversion=1.0 -Dpackaging=jar
+```
+
+2. Build the whole project
+```shell
+mvn clean install
+```
+
+3. Run the server
+```shell
+java -jar ./server/target/server-0.0.1.jar
+```
+
+4. Run the client
+```shell
+java -jar ./client/target/client-0.0.1.jar
+```
+
+5. Install the Libraries  
+Auf ./server/lib das spread-4.0.0-api als Library hinzufügen. Rechtsclick Add as Library... in Project Level  
+Auf ./client/lib das alcatraz-lib als Library hinzufügen. Rechtsclick Add as Library... in Project Level  
+
+![spread_library](https://github.com/user-attachments/assets/b495a506-bc04-4c5c-a5d0-b24f61a7e30a)
 
 
 # Client - Interfaces 
