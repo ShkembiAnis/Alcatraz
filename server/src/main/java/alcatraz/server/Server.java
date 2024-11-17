@@ -7,6 +7,8 @@ import alcatraz.shared.Lobby;
 import spread.*;
 
 import java.io.Serializable;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -17,15 +19,25 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Repl
     private final Map<String, Player> players = new HashMap<>();
     private final LobbyManager lobbyManager;
 
-    private final SpreadConnection connection;
-    private SpreadGroup group;
     private String serverName;
+    private int serverId;
+    private SpreadConnection connection;
+    private SpreadGroup group;
     private boolean isPrimary;
+    private String spreadHost;
+    private int spreadPort;
+    private String groupName;
+    private boolean verbose;
 
-    protected Server(LobbyManager lobbyManager) throws RemoteException {
+    public Server(String serverName, int serverId, LobbyManager lobbyManager, String spreadHost, int spreadPort, String groupName, boolean verbose) throws RemoteException {
         super();
-        this.lobbyManager = lobbyManager;
         this.serverName = serverName;
+        this.serverId = serverId;
+        this.lobbyManager = lobbyManager;
+        this.spreadHost = spreadHost;
+        this.spreadPort = spreadPort;
+        this.groupName = groupName;
+        this.verbose = verbose;
         this.isPrimary = false;
         this.connection = new SpreadConnection();
         joinServerGroup();
@@ -152,30 +164,72 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Repl
 
     @Override
     public void joinServerGroup() {
-
+        try {
+            // Include server ID in the private group name
+            String privateGroupName = serverName + "_" + serverId;
+            connection.connect(InetAddress.getByName(spreadHost), spreadPort, privateGroupName, false, true);
+            connection.add(this);
+            group = new SpreadGroup();
+            group.join(connection, groupName);
+            System.out.println(serverName + " joined the group.");
+        } catch (SpreadException | UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
+
+
 
     @Override
     public void forwardToPrimary(Object request) {
-
+        try {
+            SpreadMessage msg = new SpreadMessage();
+            msg.setReliable();
+            msg.addGroup("ServerGroup");
+            msg.setObject((Serializable) request);
+            connection.multicast(msg);
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void membershipMessageReceived(SpreadMessage spreadMessage) {
-
+    public void membershipMessageReceived(SpreadMessage message) {
+        MembershipInfo info = message.getMembershipInfo();
+        if (info.isCausedByJoin() || info.isCausedByLeave() || info.isCausedByDisconnect()) {
+            System.out.println("Membership change detected.");
+            electNewPrimary(info);
+        }
     }
 
     @Override
     public void electNewPrimary(MembershipInfo info) {
         SpreadGroup[] members = info.getMembers();
+        int primaryId = serverId;
         String primaryName = serverName;
+        System.out.println("Current server ID: " + serverId + ", Name: " + serverName);
+        System.out.println("Members in group:");
+        Map<String, Integer> memberIdMap = new HashMap<>();
         for (SpreadGroup member : members) {
             String memberName = member.toString();
-            if (memberName.compareTo(primaryName) < 0) {
+            String actualMemberName = extractServerName(memberName);
+            int memberId = extractServerId(memberName);
+            memberIdMap.put(actualMemberName, memberId);
+            System.out.println(" - " + actualMemberName + " (ID: " + memberId + ")");
+        }
+
+        // Determine the primary based on the lowest or highest ID
+        // For example, using the lowest ID
+        for (Map.Entry<String, Integer> entry : memberIdMap.entrySet()) {
+            int memberId = entry.getValue();
+            String memberName = entry.getKey();
+            if (memberId < primaryId) {
+                primaryId = memberId;
                 primaryName = memberName;
             }
         }
-        if (serverName.equals(primaryName)) {
+
+        System.out.println("Elected primary: " + primaryName + " (ID: " + primaryId + ")");
+        if (serverId == primaryId) {
             isPrimary = true;
             System.out.println(serverName + " is now the primary server.");
 
@@ -187,6 +241,48 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Repl
             System.out.println(serverName + " is a backup server.");
         }
     }
+
+
+    private int extractServerId(String memberName) {
+        // The memberName is in the format "#ServerName_ServerId#Host"
+        if (memberName.startsWith("#")) {
+            int secondHashIndex = memberName.indexOf('#', 1);
+            if (secondHashIndex > 1) {
+                String privateGroupName = memberName.substring(1, secondHashIndex);
+                String[] parts = privateGroupName.split("_");
+                if (parts.length == 2) {
+                    try {
+                        return Integer.parseInt(parts[1]); // Return the server ID
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        // If unable to extract ID, return a high value
+        return Integer.MAX_VALUE;
+    }
+
+    private String extractServerName(String memberName) {
+        // The memberName is in the format "#ServerName_ServerId#Host"
+        if (memberName.startsWith("#")) {
+            int secondHashIndex = memberName.indexOf('#', 1);
+            if (secondHashIndex > 1) {
+                String privateGroupName = memberName.substring(1, secondHashIndex);
+                String[] parts = privateGroupName.split("_");
+                if (parts.length == 2) {
+                    return parts[0]; // Return the server name
+                }
+            }
+        }
+        // If the format is unexpected, return the original memberName
+        return memberName;
+    }
+
+
+
+
+
 
     @Override
     public void update(Object state) {
