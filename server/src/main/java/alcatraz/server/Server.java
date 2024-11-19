@@ -99,4 +99,10 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         }
         return false;
     }
+
+    @Override
+    public void removeLobby(long id) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'removeLobby'");
+    }
 }
