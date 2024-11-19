@@ -12,6 +12,7 @@ public class Lobby implements Serializable {
     private long id;
     private Map<String, Player> players;
     private String ownerId;
+    // TODO: add secret
 
     public Lobby(long id, Map<String, Player> players, String ownerId) {
         this.id = id;
