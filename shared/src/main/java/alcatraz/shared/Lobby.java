@@ -6,25 +6,26 @@
 package alcatraz.shared;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.HashMap;
 
 public class Lobby implements Serializable {
-    private long id;
-    private Map<String, Player> players;
-    private String ownerId;
-    // TODO: add secret
+    public final long id;
+    private HashMap<String, Player> players;
+    public final String ownerId;
+    private final String secret;
 
-    public Lobby(long id, Map<String, Player> players, String ownerId) {
+    public Lobby(long id, String ownerId, String secretToken) {
         this.id = id;
         this.players = players;
         this.ownerId = ownerId;
+        this.secret = secretToken;
     }
 
     public long getId() {
         return this.id;
     }
 
-    public Map<String, Player> getPlayers() {
+    public HashMap<String, Player> getPlayers() {
         return this.players;
     }
 
@@ -39,6 +40,10 @@ public class Lobby implements Serializable {
         } else {
             return false;
         }
+    }
+
+    public boolean checkSecret(String secret) {
+        return this.secret.equals(secret);
     }
 
     public void removePlayer(String clientName) {

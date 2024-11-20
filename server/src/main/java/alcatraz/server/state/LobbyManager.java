@@ -1,20 +1,33 @@
 package alcatraz.server.state;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 import alcatraz.shared.Lobby;
+import alcatraz.shared.LockedLobby;
 import alcatraz.shared.Player;
 
 public class LobbyManager {
     private HashMap<Long, Lobby> lobbies;
+    private long lobbyIdCounter = 0;
+
 
     public LobbyManager() {
         this.lobbies = new HashMap<>();
     }
 
-    public void createLobby(long lobbyId,Lobby lobby) {
-        lobbies.put(lobbyId, lobby);
+    public LockedLobby createLobby(String ownerName) {
+        while (lobbies.containsKey(lobbyIdCounter)) {
+            ++lobbyIdCounter;
+        }
+
+        final String secretToken = UUID.randomUUID().toString();
+        Lobby newLobby = new Lobby(lobbyIdCounter, secretToken, ownerName);
+        lobbies.put(lobbyIdCounter, newLobby);
+
+        return new LockedLobby(lobbyIdCounter, secretToken);
     }
+
     public void removeLobby(long lobbyId) {
         lobbies.remove(lobbyId);
     }

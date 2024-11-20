@@ -2,10 +2,7 @@ package alcatraz.server;
 
 import alcatraz.server.replication.ReplicationInterface;
 import alcatraz.server.state.SharedState;
-import alcatraz.shared.Player;
-import alcatraz.shared.ClientInterface;
-import alcatraz.shared.ServerInterface;
-import alcatraz.shared.Lobby;
+import alcatraz.shared.*;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -24,39 +21,35 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
     // TODO: instead of return boolean, throw an exception if player already exists
     @Override
-    public boolean registerPlayer(String playerName, ClientInterface client) throws RemoteException {
+    public boolean registerPlayer(String clientName, ClientInterface client) throws RemoteException {
 
         if (this.replication.isPrimary()) {
-            if (this.state.players.containsKey(playerName)) {
+            if (this.state.players.containsKey(clientName)) {
                 // TODO: throw an exception instead of returning false
                 return false;
             }
             // Store the Player with ClientInterface
-            this.state.players.put(playerName, new Player(client, playerName, "ip_address", "port"));
-            System.out.println(playerName + " registered");
+            this.state.players.put(clientName, new Player(client, clientName, "ip_address", "port"));
+            System.out.println(clientName + " registered");
+            this.replication.replicatePrimaryState();
             return true;
             // TODO: there should be an early return instead of else
         } else {
             // Forward the request to the primary server
-            return this.replication.getPrimaryServer().registerPlayer(playerName, client);
+            return this.replication.getPrimaryServer().registerPlayer(clientName, client);
         }
     }
 
     @Override
-    public Lobby createLobby(String clientName) throws RemoteException {
+    public LockedLobby createLobby(String clientName) throws RemoteException {
         if (this.replication.isPrimary()) {
-            SharedState.lobbyIdCounter++;
-            long lobbyId = SharedState.lobbyIdCounter;
-            Map<String, Player> lobbyPlayers = new HashMap<>();
-            lobbyPlayers.put(clientName, this.state.players.get(clientName));
-            Lobby lobby = new Lobby(lobbyId, lobbyPlayers, clientName);
-            this.state.lobbyManager.createLobby(lobbyId, lobby);
-            System.out.println("Lobby created with ID: " + lobbyId + " by Player: " + clientName);
+            LockedLobby newLobby = this.state.lobbyManager.createLobby(clientName);
+            System.out.println("Lobby created with ID: " + newLobby.id + " by Player: " + clientName);
 
             // Replication logic: Update backups with the new lobbies state
             this.replication.replicatePrimaryState();
 
-            return lobby;
+            return newLobby;
         } else {
             // Forward the request to the primary server
             return this.replication.getPrimaryServer().createLobby(clientName);

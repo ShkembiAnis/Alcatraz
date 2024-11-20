@@ -10,6 +10,7 @@ import java.util.Scanner;
 
 import alcatraz.shared.ClientInterface;
 import alcatraz.shared.Lobby;
+import alcatraz.shared.LockedLobby;
 import alcatraz.shared.ServerInterface;
 
 public class Main {
@@ -69,8 +70,8 @@ public class Main {
                         break;
                     case "2":
                         System.out.println("Creating Lobby...");
-                        Lobby lobby = server.createLobby(clientName);
-                        System.out.println("Lobby created with id: " + lobby.getId());
+                        LockedLobby lobby = server.createLobby(clientName);
+                        System.out.println("Lobby created with id: " + lobby.id);
                         /**
                          * Owner LobbyMenu
                          * responsible for the start of the game
@@ -80,7 +81,7 @@ public class Main {
                         String ownerLobbyMenuInput = scanner.nextLine();
                         switch (ownerLobbyMenuInput){
                             case "1":
-                                server.initializeGameStart(lobby.getId());
+                                server.initializeGameStart(lobby.id);
                                 break;
                             case "0":
                                 break;
