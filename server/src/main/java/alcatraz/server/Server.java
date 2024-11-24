@@ -101,8 +101,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     }
 
     @Override
-    public void removeLobby(long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'removeLobby'");
+    public void removeLobby(long lobbyId) throws RemoteException {
+        lobbyManager.removeLobby(lobbyId);
+        System.out.println("Lobby with ID: " + lobbyId + " has been removed.");
     }
 }

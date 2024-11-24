@@ -28,4 +28,5 @@ public class LobbyManager {
     public Boolean addPlayerToLobby(long lobbyId, Player player){
         return lobbies.get(lobbyId).addPlayer(player);
     }
+    
 }

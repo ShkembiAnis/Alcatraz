@@ -8,41 +8,59 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Map;
 import java.util.Scanner;
-import alcatraz.client.GameGUI;
 
 public class Main {
+    private static Scanner scanner = new Scanner(System.in);
+    private static ServerInterface server;
+    private static String clientName;
+
     public static void main(String[] args) {
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
-            ServerInterface server = (ServerInterface) registry.lookup("Alcatraz");
+            server = (ServerInterface) registry.lookup("Alcatraz");
 
-            Scanner scanner = new Scanner(System.in);
-            String clientName = register_GetClientName(server);
+            clientName = register_GetClientName(server);
 
-            while (true) {
-                System.out.println("\nMain Menu:");
-                System.out.println("(1) Show Available Lobbies");
-                System.out.println("(2) Create Lobby");
-                System.out.println("(0) Exit");
-                System.out.print("Enter your choice: ");
-                String menu1Input = scanner.nextLine();
-
-                switch (menu1Input) {
-                    case "1":
-                        showAvailableLobbies(server, scanner, clientName);
-                        break;
-                    case "2":
-                        createLobby(server, scanner, clientName);
-                        break;
-                    case "0":
-                        System.out.println("Exiting...");
-                        System.exit(0);
-                    default:
-                        System.out.println("Invalid choice. Please try again.");
-                }
-            }
+            showMainMenu(true);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void showMainMenu(boolean initializeScanner) {
+        if (initializeScanner) {
+            scanner = new Scanner(System.in);
+        }
+
+        while (true) {
+            System.out.println("\nMain Menu:");
+            System.out.println("(1) Show Available Lobbies");
+            System.out.println("(2) Create Lobby");
+            System.out.println("(0) Exit");
+            System.out.print("Enter your choice: ");
+            String menu1Input = scanner.nextLine();
+
+            switch (menu1Input) {
+                case "1":
+                    try {
+                        showAvailableLobbies(server, scanner, clientName);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "2":
+                    try {
+                        createLobby(server, scanner, clientName);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "0":
+                    System.out.println("Exiting...");
+                    System.exit(0);
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
         }
     }
 
@@ -80,7 +98,7 @@ public class Main {
                 case "1":
                     server.initializeGameStart(lobby.getId());
                     System.out.println("Game started in Lobby " + lobby.getId());
-                    GameGUI.main(new String[]{});
+                    GameGUI.startGame();
                     return;
                 case "0":
                     server.removeLobby(lobby.getId());
