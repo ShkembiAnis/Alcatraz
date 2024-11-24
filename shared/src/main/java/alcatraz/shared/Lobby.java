@@ -6,6 +6,7 @@
 package alcatraz.shared;
 
 import java.io.Serializable;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 
 public class Lobby implements Serializable {
@@ -13,10 +14,10 @@ public class Lobby implements Serializable {
     private HashMap<String, Player> players;
     public final String ownerId;
     private final String secret;
+    private static final long MAXSIZE = 4;
 
     public Lobby(long id, String ownerId, String secretToken) {
         this.id = id;
-        this.players = players;
         this.ownerId = ownerId;
         this.secret = secretToken;
     }
@@ -33,12 +34,11 @@ public class Lobby implements Serializable {
         return this.ownerId;
     }
 
-    public boolean addPlayer(Player player) {
-        if (this.players.size() < 4) {
+    public void addPlayer(Player player) throws RemoteException {
+        if (this.players.size() < MAXSIZE) {
             this.players.put(player.getClientName(), player);
-            return true;
         } else {
-            return false;
+            throw new RemoteException();      //MM20241121: implement appropriate exception
         }
     }
 
@@ -48,5 +48,9 @@ public class Lobby implements Serializable {
 
     public void removePlayer(String clientName) {
         this.players.remove(clientName);
+    }
+
+    public long countPlayers() {
+        return this.players.size();
     }
 }

@@ -19,64 +19,69 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         this.state = replication.getSharedState();
     }
 
-    // TODO: instead of return boolean, throw an exception if player already exists
+    //MM20241121: implement appropriate exception objects
     @Override
-    public boolean registerPlayer(String clientName, ClientInterface client) throws RemoteException {
-
+    public void registerPlayer(String clientName, ClientInterface client) throws RemoteException {
         if (this.replication.isPrimary()) {
             if (this.state.players.containsKey(clientName)) {
-                // TODO: throw an exception instead of returning false
-                return false;
+                //MM20241121: implement a dedicated exception class
+                throw new RemoteException();
             }
+
             // Store the Player with ClientInterface
+            //MM20241121: use a mutex at this stage!
             this.state.players.put(clientName, new Player(client, clientName, "ip_address", "port"));
             System.out.println(clientName + " registered");
             this.replication.replicatePrimaryState();
-            return true;
             // TODO: there should be an early return instead of else
+            //MM20241121: why?
         } else {
             // Forward the request to the primary server
-            return this.replication.getPrimaryServer().registerPlayer(clientName, client);
+            this.replication.getPrimaryServer().registerPlayer(clientName, client);
         }
     }
 
     @Override
-    public LockedLobby createLobby(String clientName) throws RemoteException {
+    public LobbyKey createLobby(Player owner) throws RemoteException {
         if (this.replication.isPrimary()) {
-            LockedLobby newLobby = this.state.lobbyManager.createLobby(clientName);
-            System.out.println("Lobby created with ID: " + newLobby.id + " by Player: " + clientName);
+            //MM20241121: This section needs a mutex
+            LobbyKey key = this.state.lobbyManager.createLobby(owner);
+            System.out.println("Lobby created with ID: " + key.id + " by Player: " + owner.getClientName());
 
-            // Replication logic: Update backups with the new lobbies state
+            this.state.lobbyManager.addPlayerToLobby(key.id, owner);
             this.replication.replicatePrimaryState();
 
-            return newLobby;
+            return key;
         } else {
             // Forward the request to the primary server
-            return this.replication.getPrimaryServer().createLobby(clientName);
+            //MM20241121: The server may not be available anymore when we return from the primary server
+            //              -> Therefore the client must check if creation was successful when an exception was thrown!
+            return this.replication.getPrimaryServer().createLobby(owner);
         }
     }
 
     // TODO: refactor nested if statements
     @Override
-    public boolean joinLobby(String clientName, Long lobbyId) throws RemoteException {
+    public void joinLobby(Player client, Long lobbyId) throws RemoteException {
         if (this.replication.isPrimary()) {
-            if (this.state.lobbyManager.getLobbies().containsKey(lobbyId) &&
-                    this.state.lobbyManager.getLobbyById(lobbyId).getPlayers().size() < 4) {
+            //MM20241121: this section needs a mutex
+            if (this.state.lobbyManager.getLobbies().containsKey(lobbyId)) {
 
-                this.state.lobbyManager.addPlayerToLobby(lobbyId, this.state.players.get(clientName));
-                System.out.println("Player " + clientName + " joined lobby " + lobbyId);
+                this.state.lobbyManager.addPlayerToLobby(lobbyId, this.state.players.get(client.getClientName()));
+                System.out.println("Player " + client.getClientName() + " joined lobby " + lobbyId);
 
                 // Replication logic: Update backups with the new lobbies state
                 this.replication.replicatePrimaryState();
-
-                return true;
+            }
+            else {
+                throw new RemoteException();        //MM20241121: find or implement appropriate exception!
             }
         } else {
             // Forward the request to the primary server
-            return this.replication.getPrimaryServer().joinLobby(clientName, lobbyId);
+            //MM20241121: The server may not be available anymore when we return from the primary server
+            //              -> Therefore the client must check if creation was successful when an exception was thrown!
+            this.replication.getPrimaryServer().joinLobby(client, lobbyId);
         }
-
-        return false;
     }
 
     @Override
@@ -112,6 +117,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
 
     // TODO: method not used
+    //MM20241124: unnecessary. will remove in next cycle after further checks
     private Boolean checkIfUsernameExists(String playerName) {
         for (String key : this.state.players.keySet()) {
             if (playerName.equals(key)) {
