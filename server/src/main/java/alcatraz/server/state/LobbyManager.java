@@ -57,22 +57,53 @@ public class LobbyManager {
         this.lobbies = lobbies; // added for updating local state when primary updates backups;
     }
 
-    public HashMap<Long, Lobby> getLobbies() {
-        return lobbies;
+    public HashMap<Long, Lobby> getAllLobbies() { return lobbies; }
+
+    public HashMap<Long, Lobby> getAvailableLobbies() {
+        HashMap<Long, Lobby>    availableLobbies = new HashMap<>();
+
+        for (Long lobbyId : lobbies.keySet()) {
+            final Lobby currentLobby = lobbies.get(lobbyId);
+            if (currentLobby.isAvailable() && !currentLobby.isFull()) {
+                availableLobbies.put(lobbyId, currentLobby);
+            }
+        }
+
+        return availableLobbies;
     }
 
     public Lobby getLobbyById(long lobbyId){
         return lobbies.get(lobbyId);
     }
 
+    public Long getLobbyIdByClientName(String clientName) {
+        return lobbyByPlayer.get(clientName);
+    }
+
     public void addPlayerToLobby(long lobbyId, Player player) throws RemoteException {
+        //MM20241124: think about case, where player can already be found in respective lobby!
+        if (lobbyByPlayer.containsKey(player.getClientName())) {
+            removePlayerFromLobby(player.getClientName());
+        }
+
         lobbies.get(lobbyId).addPlayer(player);
+        lobbyByPlayer.put(player.getClientName(), lobbyId);
+
+        System.out.println("Player '" + player.getClientName() + "' added to lobby " + lobbyId);
     }
 
     public void removePlayerFromLobby(String playerName) throws RemoteException {
-        lobbies.get(lobbyByPlayer.get(playerName)).removePlayer(playerName);
-        if (lobbies.get(lobbyByPlayer.get(playerName)).getPlayers().isEmpty()) {
-            removeLobby(lobbyByPlayer.get(playerName));
+        final Long previousLobbyId = lobbyByPlayer.get(playerName);
+        lobbies.get(previousLobbyId).removePlayer(playerName);
+        if (lobbies.get(previousLobbyId).getPlayers().isEmpty()) {
+            removeLobby(previousLobbyId);
         }
+        lobbyByPlayer.remove(playerName);
+
+        System.out.println("Player '" + playerName + "' removed from lobby " + previousLobbyId);
+    }
+
+    public boolean isLobbyReadyForGameStart(long lobbyId, String secret) {
+        return lobbies.get(lobbyId).canBePlayed(secret);
     }
 }

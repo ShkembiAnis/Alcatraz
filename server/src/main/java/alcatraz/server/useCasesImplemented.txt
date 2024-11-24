@@ -1,0 +1,47 @@
+IMPLEMENTED USE CASES ON SERVER SIDE
+20241124
+MM
+
+ - PURPOSE
+  . List functionality provided by server class.
+
+ - LIST
+  . register player: DONE
+   > a player must be registered in order to use the functionality below.
+  . create lobby: DONE
+   > Any player can create a lobby. The player creating a lobby will be the owner and receive a (secret) token to start
+     the game.
+   > If a player is already associated with a lobby, and they create a new lobby, they will be removed from the current
+     lobby and inserted into the newly created lobby.
+   > If creation fails at any point in the process, the player will have to create a new lobby in order to receive the
+     token to start the game.
+  . join lobby: DONE
+   > If player is associated with a lobby, and they join another lobby, they will be removed from that previous lobby
+     automatically.
+  . leave lobby: DONE
+   > As long as a Lobby is available, any player can leave the lobby. Once, the game has started, the Lobby is no longer
+     available.
+  . start game: NOT DONE! check number of players for each game!
+   > The correct number of players within the lobby needs to be checked before a game can be started.
+   > The availability of the lobby needs to be checked before a game can be started.
+   > Each player is notified independently in order for a game to be started.
+  . replicate: ??? needs checking!
+
+ - MISSING
+  . register player
+  . join lobby
+  . leave lobby
+  . move functionality to shared state
+   > implement player and lobby management with shared state, so that server class doesn't call it explicitly but only
+     forwards to shared state
+     //MM20241124: but what's the gain from doing that?
+  . start game
+  . replicate
+  . Lobby reuse after game ended?
+   > not discussed. may skip this
+  . Exception safety!
+   > check overall exception implementations!
+   > check interplay of exceptions and muteces!
+  . Overall
+   > are interfaces sensible and complete?
+   > Mutex usage correct and sensible?
