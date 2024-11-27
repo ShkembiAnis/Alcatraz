@@ -10,7 +10,7 @@ import java.util.Scanner;
 
 import alcatraz.shared.ClientInterface;
 import alcatraz.shared.Lobby;
-import alcatraz.shared.LockedLobby;
+import alcatraz.shared.LobbyKey;
 import alcatraz.shared.ServerInterface;
 
 public class Main {
@@ -27,6 +27,7 @@ public class Main {
             Scanner scanner = new Scanner(System.in);
             System.out.print("Enter your name: ");
             String clientName = register_GetClientName(server);
+            ClientInterface client = new Client(server, clientName);
 
             /**
              * Start of Menu: 2 Options
@@ -39,7 +40,8 @@ public class Main {
                 String menu1Input = scanner.nextLine();
                 switch (menu1Input){
                     case "1":
-                        System.out.println("Show available Lobbies...\nListing lobbies:");
+                        System.out.println("Show available Lobbies...");
+                        System.out.println("Listing lobbies:");
                         Map<Long, Lobby> lobbies = server.getLobbies();
                         for (Map.Entry<Long, Lobby> entry : lobbies.entrySet()) {
                             Lobby lobbyEntry = entry.getValue(); // The value (List<String>)
@@ -47,7 +49,7 @@ public class Main {
                         }
                         System.out.println("Enter a lobbyID, to join a lobby (enter 0 to exit Lobby-List)");
                         String joinLobbyIdInput = scanner.nextLine();
-                        if(server.joinLobby(clientName, Long.valueOf(joinLobbyIdInput))){
+                        if(server.joinLobby( clientName, Long.valueOf(joinLobbyIdInput))){
                             System.out.println("Lobby" + lobbies.get(Long.valueOf(joinLobbyIdInput)).getId() + " joined.");
                             System.out.println("Waiting For Game Start...");
 
@@ -70,8 +72,8 @@ public class Main {
                         break;
                     case "2":
                         System.out.println("Creating Lobby...");
-                        LockedLobby lobby = server.createLobby(clientName);
-                        System.out.println("Lobby created with id: " + lobby.id);
+                        LobbyKey lobby = server.createLobby(clientName);
+                        System.out.println("Lobby created with id: " + lobby.lobbyId);
                         /**
                          * Owner LobbyMenu
                          * responsible for the start of the game
@@ -81,7 +83,7 @@ public class Main {
                         String ownerLobbyMenuInput = scanner.nextLine();
                         switch (ownerLobbyMenuInput){
                             case "1":
-                                server.initializeGameStart(lobby.id);
+                                server.initializeGameStart(lobby.lobbyId, client.tellSecret());
                                 break;
                             case "0":
                                 break;
@@ -100,14 +102,16 @@ public class Main {
     private static String register_GetClientName(ServerInterface server) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
         String clientName = "";
-        while(true){
+        while (true) {
             clientName = scanner.nextLine();
             ClientInterface client = new Client(server, clientName);
-            if(server.registerPlayer(clientName, client)){
+            try {
+                server.registerPlayer(clientName, client);
                 System.out.println(clientName + " registered");
                 break;
-            }else{
-                System.out.println("The Username " + clientName + " already exits.\nEnter your name:");
+            } catch (Exception e) {
+                System.out.println("The Username " + clientName + " already exits.");
+                System.out.println("Enter your name: ");
             }
         }
         return clientName;

@@ -6,11 +6,13 @@ import java.util.UUID;
 
 import alcatraz.shared.Lobby;
 import alcatraz.shared.LobbyKey;
+import alcatraz.shared.LobbyLockedException;
+import alcatraz.shared.TooManyLobbiesException;
 import alcatraz.shared.Player;
 
 public class LobbyManager {
-    private HashMap<Long, Lobby> lobbies;
-    private HashMap<String, Long> lobbyByPlayer;    //MM20241122: Each player can only be registered in one lobby.
+    private HashMap<Long, Lobby> lobbies = new HashMap<>();
+    private HashMap<String, Long> lobbyByPlayer = new HashMap<>();
     private long lobbyIdCounter;
     private static final long MAXSIZE = 100;
 
@@ -28,7 +30,7 @@ public class LobbyManager {
      */
     public LobbyKey createLobby(Player owner) throws RemoteException {
         if (lobbies.size() == MAXSIZE) {
-            throw new RemoteException();        //MM20241122: find better Exception! "MAXSIZE reached"
+            throw new TooManyLobbiesException();
         }
 
         while (lobbies.containsKey(lobbyIdCounter)) {
@@ -76,14 +78,11 @@ public class LobbyManager {
         return lobbies.get(lobbyId);
     }
 
-    public Long getLobbyIdByClientName(String clientName) {
-        return lobbyByPlayer.get(clientName);
-    }
-
     public void addPlayerToLobby(long lobbyId, Player player) throws RemoteException {
         //MM20241124: think about case, where player can already be found in respective lobby!
         if (lobbyByPlayer.containsKey(player.getClientName())) {
             removePlayerFromLobby(player.getClientName());
+            System.out.println("Removed player " + player.getClientName() + " from lobby " + lobbyId + ".");
         }
 
         lobbies.get(lobbyId).addPlayer(player);
@@ -92,7 +91,8 @@ public class LobbyManager {
         System.out.println("Player '" + player.getClientName() + "' added to lobby " + lobbyId);
     }
 
-    public void removePlayerFromLobby(String playerName) throws RemoteException {
+    //MM20241127: not LobbyManager
+    public void removePlayerFromLobby(String playerName) throws LobbyLockedException {
         final Long previousLobbyId = lobbyByPlayer.get(playerName);
         lobbies.get(previousLobbyId).removePlayer(playerName);
         if (lobbies.get(previousLobbyId).getPlayers().isEmpty()) {
@@ -101,9 +101,5 @@ public class LobbyManager {
         lobbyByPlayer.remove(playerName);
 
         System.out.println("Player '" + playerName + "' removed from lobby " + previousLobbyId);
-    }
-
-    public boolean isLobbyReadyForGameStart(long lobbyId, String secret) {
-        return lobbies.get(lobbyId).canBePlayed(secret);
     }
 }

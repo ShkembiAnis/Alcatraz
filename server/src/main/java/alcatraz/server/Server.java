@@ -21,15 +21,13 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         this.state = replication.getSharedState();
     }
 
-    //MM20241121: implement appropriate exception objects
     @Override
     public void registerPlayer(String clientName, ClientInterface client) throws RemoteException {
         if (this.replication.isPrimary()) {
             fairLock.lock();
             if (this.isPlayerRegistered(clientName)) {
-                //MM20241121: implement a dedicated exception class
                 fairLock.unlock();
-                throw new RemoteException();
+                throw new DuplicateNameException(clientName);
             }
 
             // Store the Player with ClientInterface
@@ -38,8 +36,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
             System.out.println(clientName + " registered");
             this.replication.replicatePrimaryState();
             fairLock.unlock();
-            // TODO: there should be an early return instead of else
-            //MM20241121: why?
         } else {
             // Forward the request to the primary server
             this.replication.getPrimaryServer().registerPlayer(clientName, client);
@@ -51,60 +47,62 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     }
 
     @Override
-    public LobbyKey createLobby(Player owner) throws RemoteException {
+    public LobbyKey createLobby(String ownerName) throws RemoteException {
         if (this.replication.isPrimary()) {
             fairLock.lock();
             //MM20241121: This section needs a mutex
-            LobbyKey key = this.state.lobbyManager.createLobby(owner);
-            System.out.println("Lobby " + key.lobbyId + " create by player " + owner.getClientName());
+            LobbyKey key = this.state.lobbyManager.createLobby(this.state.players.get(ownerName));
+            System.out.println("Lobby " + key.lobbyId + " create by player " + ownerName);
 
-            this.state.lobbyManager.addPlayerToLobby(key.lobbyId, owner);
+            this.state.lobbyManager.addPlayerToLobby(key.lobbyId, this.state.players.get(ownerName));       //MM20241127: cannot throw
             this.replication.replicatePrimaryState();
             fairLock.unlock();
             return key;
         } else {
-            // Forward the request to the primary server
-            //MM20241121: The server may not be available anymore when we return from the primary server
-            //              -> Therefore the client must check if creation was successful when an exception was thrown!
-            return this.replication.getPrimaryServer().createLobby(owner);
+            return this.replication.getPrimaryServer().createLobby(ownerName);
         }
     }
 
     @Override
-    public void joinLobby(Player client, Long lobbyId) throws RemoteException {
-        if (!isPlayerRegistered(client.getClientName())) {          //MM20241124: this should by answered by any server (due to replication after each successful step)
-            throw new RemoteException("Player " + client.getClientName() + " is not registered");
-        }
+    public void joinLobby(String clientName, Long lobbyId) throws RemoteException {
 
         if (this.replication.isPrimary()) {
             fairLock.lock();
-            this.state.lobbyManager.addPlayerToLobby(lobbyId, this.state.players.get(client.getClientName()));
 
+            if (!isPlayerRegistered(clientName)) {
+                fairLock.unlock();
+                throw new PlayerNotRegisteredException(clientName);
+            }
+
+            try {
+                this.state.lobbyManager.addPlayerToLobby(lobbyId, this.state.players.get(clientName));
+            } catch (RemoteException e) {
+                this.fairLock.unlock();
+                throw e;
+            }
             // Replication logic: Update backups with the new lobbies state
             this.replication.replicatePrimaryState();
             fairLock.unlock();
         } else {
-            // Forward the request to the primary server
-            //MM20241121: The server may not be available anymore when we return from the primary server
-            //              -> Therefore the client must check if creation was successful when an exception was thrown!
-            this.replication.getPrimaryServer().joinLobby(client, lobbyId);
+            this.replication.getPrimaryServer().joinLobby(clientName, lobbyId);
         }
     }
 
     @Override
-    public void leaveLobby(Player client) throws RemoteException {
+    public void leaveLobby(String clientName) throws RemoteException {      //MM20241127: keep generic exception!
         if (this.replication.isPrimary()) {
             this.fairLock.lock();
-            this.state.lobbyManager.removePlayerFromLobby(client.getClientName());
+            this.state.lobbyManager.removePlayerFromLobby(clientName);
 
             this.replication.replicatePrimaryState();
+            this.fairLock.unlock();
         } else {
-            this.replication.getPrimaryServer().leaveLobby(client);
+            this.replication.getPrimaryServer().leaveLobby(clientName);
         }
     }
 
     @Override
-    public Map<Long, Lobby> getLobbies() throws RemoteException {
+    public Map<Long, Lobby> getLobbies() {
         return this.state.lobbyManager.getAvailableLobbies();
     }
 
@@ -112,23 +110,28 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     public void initializeGameStart(long lobbyId, String secret) throws RemoteException {
         if (this.replication.isPrimary()) {
             this.fairLock.lock();
-            if (this.state.lobbyManager.isLobbyReadyForGameStart(lobbyId, secret)) {
-                Lobby lobby = this.state.lobbyManager.getLobbyById(lobbyId);
-                lobby.setUnavailable();
-                lobby.getPlayers().forEach((key, value) -> {
+            if (this.state.lobbyManager.getLobbyById(lobbyId).canBePlayed(secret)) {
+                this.state.lobbyManager.getLobbyById(lobbyId).setUnavailable();
+                this.state.lobbyManager.getLobbyById(lobbyId).getPlayers().forEach((key, value) -> {
                 try {
                     ClientInterface client = value.getClient();
                     if (client != null) {
-                        System.out.println("Starting game for client: " + value.getClientName() + " in lobby " + lobby.getId());
-                        client.startGame(lobby);
+                        System.out.println("Starting game for client: " + value.getClientName() + " in lobby " + this.state.lobbyManager.getLobbyById(lobbyId).getId());
+                        client.startGame(this.state.lobbyManager.getLobbyById(lobbyId));        //MM20241127: after today's discussion, this must be renamed to "isPresent()"
                     } else {
                         System.out.println("ClientInterface not found for player: " + value.getClientName());
                     }
                 } catch (RemoteException e) {
-                    fairLock.unlock();
-                    throw new RuntimeException(e);
+                    this.state.lobbyManager.getLobbyById(lobbyId).removePlayer(key, true);      //MM20241127: "true" prevents from exception
                 }
                 });
+
+                if (!this.state.lobbyManager.getLobbyById(lobbyId).canBePlayed(secret)) {
+                    this.state.lobbyManager.getLobbyById(lobbyId).setAvailable();
+                    replication.replicatePrimaryState();
+                    fairLock.unlock();
+                    throw new NotEnoughPlayersException(lobbyId);
+                }
             }
             fairLock.unlock();
             // No need to replicate here if lobbies haven't changed
@@ -138,6 +141,5 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         }
 
     }
-
 
 }
