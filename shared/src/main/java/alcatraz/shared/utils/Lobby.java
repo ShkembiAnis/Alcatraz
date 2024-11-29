@@ -3,7 +3,10 @@
 // (powered by FernFlower decompiler)
 //
 
-package alcatraz.shared;
+package alcatraz.shared.utils;
+
+import alcatraz.shared.exceptions.LobbyFullException;
+import alcatraz.shared.exceptions.LobbyLockedException;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;

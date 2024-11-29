@@ -1,4 +1,7 @@
-package alcatraz.shared;
+package alcatraz.shared.interfaces;
+
+import alcatraz.shared.utils.Lobby;
+import alcatraz.shared.utils.LobbyKey;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

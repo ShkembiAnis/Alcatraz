@@ -1,6 +1,6 @@
 package alcatraz.server.state;
 
-import alcatraz.shared.Player;
+import alcatraz.shared.utils.Player;
 
 import java.util.HashMap;
 import java.io.Serializable;

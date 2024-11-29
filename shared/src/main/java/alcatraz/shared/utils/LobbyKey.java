@@ -1,5 +1,5 @@
 
-package alcatraz.shared;
+package alcatraz.shared.utils;
 
 public class LobbyKey {
     public final long lobbyId;

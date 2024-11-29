@@ -1,4 +1,4 @@
-package alcatraz.shared;
+package alcatraz.shared.exceptions;
 
 import java.rmi.RemoteException;
 

@@ -1,9 +1,9 @@
-package alcatraz.shared;
+package alcatraz.shared.exceptions;
 
 import java.rmi.RemoteException;
 
 public class LobbyFullException extends RemoteException {
-    LobbyFullException(Long lobbyId) {
+    public LobbyFullException(Long lobbyId) {
         super("Lobby " + lobbyId + " cannot take any more players");
     }
 }

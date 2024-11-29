@@ -4,11 +4,11 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.UUID;
 
-import alcatraz.shared.Lobby;
-import alcatraz.shared.LobbyKey;
-import alcatraz.shared.LobbyLockedException;
-import alcatraz.shared.TooManyLobbiesException;
-import alcatraz.shared.Player;
+import alcatraz.shared.utils.Lobby;
+import alcatraz.shared.utils.LobbyKey;
+import alcatraz.shared.exceptions.LobbyLockedException;
+import alcatraz.shared.exceptions.TooManyLobbiesException;
+import alcatraz.shared.utils.Player;
 
 public class LobbyManager {
     private HashMap<Long, Lobby> lobbies = new HashMap<>();

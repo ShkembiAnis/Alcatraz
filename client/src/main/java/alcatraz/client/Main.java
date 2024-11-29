@@ -3,15 +3,13 @@ package alcatraz.client;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import alcatraz.shared.ClientInterface;
-import alcatraz.shared.Lobby;
-import alcatraz.shared.LobbyKey;
-import alcatraz.shared.ServerInterface;
+import alcatraz.shared.interfaces.ClientInterface;
+import alcatraz.shared.utils.Lobby;
+import alcatraz.shared.utils.LobbyKey;
+import alcatraz.shared.interfaces.ServerInterface;
 
 public class Main {
     public static void main(String[] args) {

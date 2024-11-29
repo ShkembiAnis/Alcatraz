@@ -1,7 +1,7 @@
 package alcatraz.server.replication.dto;
 
-import alcatraz.shared.Lobby;
-import alcatraz.shared.Player;
+import alcatraz.shared.utils.Lobby;
+import alcatraz.shared.utils.Player;
 
 import java.io.Serializable;
 import java.util.HashMap;

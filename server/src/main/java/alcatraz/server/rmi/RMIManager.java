@@ -1,10 +1,9 @@
 package alcatraz.server.rmi;
 
-import alcatraz.shared.ServerInterface;
+import alcatraz.shared.interfaces.ServerInterface;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.HashMap;
 import java.util.Map;
 
 public class RMIManager {

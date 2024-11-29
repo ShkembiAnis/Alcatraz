@@ -1,7 +1,5 @@
 
-package alcatraz.shared;
-
-import alcatraz.shared.Lobby;
+package alcatraz.shared.utils;
 
 public class LockedLobby {
     public final long id;

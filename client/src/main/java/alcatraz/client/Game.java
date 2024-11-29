@@ -1,8 +1,6 @@
 package alcatraz.client;
 
-import java.rmi.RemoteException;
-
-import alcatraz.shared.Lobby;
+import alcatraz.shared.utils.Lobby;
 
 public class Game {
     Lobby lobby;
