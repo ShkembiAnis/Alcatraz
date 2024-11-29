@@ -58,7 +58,7 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
 
     @Override
     public void replicatePrimaryState() {
-        ReplicationDTO replicationDTO = new ReplicationDTO(this.sharedState.lobbyManager.getLobbies(), this.sharedState.players);
+        ReplicationDTO replicationDTO = new ReplicationDTO(this.sharedState.lobbyManager.getAllLobbies(), this.sharedState.players);
         try {
             SpreadMessage msg = new SpreadMessage();
             msg.setReliable();
