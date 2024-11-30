@@ -4,7 +4,24 @@ JDK - 21
 Java - 21
 
 
-# HOW TO RUN
+
+# Intellij Setting
+## Install the Libraries  
+1. Auf ./server/lib das spread-4.0.0-api als Library hinzufügen. Rechtsclick Add as Library... in Project Level  
+2. Auf ./client/lib das alcatraz-lib als Library hinzufügen. Rechtsclick Add as Library... in Project Level
+
+![add external library in Intellij](https://github.com/user-attachments/assets/b495a506-bc04-4c5c-a5d0-b24f61a7e30a)
+
+## Add Configuration for multiple Server.
+![grafik](https://github.com/user-attachments/assets/d6a06466-810f-4b44-8df3-c8bf0bc7dfac)
+1. Edit Configurations
+2. Create 3 Server Configurations
+3. Set in the every of them different **Program arguments**:
+  - `-n Server1 -id 1 -p 1099 -s localhost -sp 4803`
+  - `-n Server2 -id 2 -p 1100 -s localhost -sp 4803`
+  - `-n Server3 -id 3 -p 1101 -s localhost -sp 4803`
+
+# HOW TO RUN?
 0. Go to root project directory
 
 1. Install alcatraz-lib and spread in your local maven repository
@@ -22,22 +39,29 @@ mvn install:install-file -Dfile=./server/lib/spread-4.0.0-api.jar -DgroupId=spre
 mvn clean install
 ```
 
-3. Run the server
+3. spread.conf setting
+- set the setting in `spread-bin-4.0.0/bin/win32/spread.conf`
+- replace the values in `<>` with your correct values (can get it using `ip a`/`ipconfig`)
+```
+Spread_Segment <MULTICAST_ADDRESS_OF_YOUR_NETWORK>:4803 {
+    <YOUR_NAME>		<IP_ADDRESS_OF_YOUR_COMPUTER_IN_YOUR_LAN>
+}
+
+```
+
+4. Run spread
+- execute `spread-bin-4.0.0/bin/win32/spread.exe`
+
+
+5. Run the server
 ```shell
 java -jar ./server/target/server-0.0.1.jar
 ```
 
-4. Run the client
+6. Run the client
 ```shell
 java -jar ./client/target/client-0.0.1.jar
 ```
-
-5. Install the Libraries  
-Auf ./server/lib das spread-4.0.0-api als Library hinzufügen. Rechtsclick Add as Library... in Project Level  
-Auf ./client/lib das alcatraz-lib als Library hinzufügen. Rechtsclick Add as Library... in Project Level  
-
-![spread_library](https://github.com/user-attachments/assets/b495a506-bc04-4c5c-a5d0-b24f61a7e30a)
-
 
 # Client - Interfaces 
 
