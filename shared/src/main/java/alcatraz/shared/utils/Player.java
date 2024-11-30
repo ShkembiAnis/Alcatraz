@@ -3,7 +3,9 @@
 // (powered by FernFlower decompiler)
 //
 
-package alcatraz.shared;
+package alcatraz.shared.utils;
+
+import alcatraz.shared.interfaces.ClientInterface;
 
 import java.io.Serializable;
 

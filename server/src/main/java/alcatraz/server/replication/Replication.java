@@ -4,9 +4,9 @@ import alcatraz.server.replication.dto.ReplicationDTO;
 import alcatraz.server.rmi.RMIManager;
 import alcatraz.server.spread.Spread;
 import alcatraz.server.state.SharedState;
-import alcatraz.shared.Lobby;
-import alcatraz.shared.Player;
-import alcatraz.shared.ServerInterface;
+import alcatraz.shared.utils.Lobby;
+import alcatraz.shared.utils.Player;
+import alcatraz.shared.interfaces.ServerInterface;
 import spread.*;
 
 import java.net.InetAddress;
@@ -58,7 +58,7 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
 
     @Override
     public void replicatePrimaryState() {
-        ReplicationDTO replicationDTO = new ReplicationDTO(this.sharedState.lobbyManager.getLobbies(), this.sharedState.players);
+        ReplicationDTO replicationDTO = new ReplicationDTO(this.sharedState.lobbyManager.getAllLobbies(), this.sharedState.players);
         try {
             SpreadMessage msg = new SpreadMessage();
             msg.setReliable();
