@@ -3,6 +3,7 @@ package alcatraz.client;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -10,6 +11,7 @@ import alcatraz.shared.interfaces.ClientInterface;
 import alcatraz.shared.utils.Lobby;
 import alcatraz.shared.utils.LobbyKey;
 import alcatraz.shared.interfaces.ServerInterface;
+import alcatraz.shared.utils.Player;
 
 public class Main {
     public static void main(String[] args) {
@@ -82,8 +84,18 @@ public class Main {
                         String ownerLobbyMenuInput = scanner.nextLine();
                         switch (ownerLobbyMenuInput){
                             case "1":
-                                //MM20241128: disabled until implemented
-                                //MM20241128: server.initializeGameStart(lobby.lobbyId, client.tellSecret());
+                                /* Start Game */
+                                ArrayList<Player> lobbyPlayers = server.initializeGameStart(lobby.lobbyId, lobby.secret);
+                                for(int i = 1; i < lobbyPlayers.size(); i++){
+                                    try {
+                                        if(!lobbyPlayers.get(i).getClientName().equals(clientName)){
+                                            lobbyPlayers.get(i).getClient().startGame(lobbyPlayers, i);
+                                        }
+                                    } catch (RemoteException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                                client.startGame(lobbyPlayers, 0);
                                 break;
                             case "0":
                                 break;

@@ -1,21 +1,18 @@
 package alcatraz.shared.interfaces;
 
-import alcatraz.shared.utils.Lobby;
-import alcatraz.shared.utils.Player;
+import at.falb.games.alcatraz.api.Prisoner;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.List;
+import java.util.ArrayList;
 
 public interface ClientInterface extends Remote {
 
-    void startGame(Lobby lobby) throws RemoteException;
+    void startGame(ArrayList<alcatraz.shared.utils.Player> players, int myLobbyPlayerId) throws RemoteException;
 
-    void receiveMove(String move) throws RemoteException;
+    void receiveMove(int playerId, int prisonerId, int rowOrCol, int row, int col) throws RemoteException;
 
-    void notifyStart(String lobbyId, List<ClientInterface> players) throws RemoteException;
-
-    boolean doMove(Player player, String Move)throws RemoteException;
+    void doMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col)throws RemoteException;
 
     void getMessage(String message) throws  RemoteException;
 }

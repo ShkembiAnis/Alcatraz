@@ -41,7 +41,7 @@ public class LobbyManager {
 
         //MM20241122: create lobby and register creator
         final String secretToken = UUID.randomUUID().toString();
-        Lobby newLobby = new Lobby(lobbyIdCounter, secretToken, owner.getClientName());
+        Lobby newLobby = new Lobby(lobbyIdCounter,owner.getClientName(), secretToken);
         lobbies.put(lobbyIdCounter, newLobby);
 
         return new LobbyKey(lobbyIdCounter, secretToken);

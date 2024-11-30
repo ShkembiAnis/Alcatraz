@@ -69,6 +69,10 @@ public class Lobby implements Serializable {
         this.players.remove(clientName);
     }
 
+    public Player getPlayer(String clientName) throws LobbyLockedException {
+        return this.players.get(clientName);
+    }
+
     public void setUnavailable() { this.isAvailable = false; }
 
     public void setAvailable() { this.isAvailable = true; }
