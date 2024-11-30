@@ -42,11 +42,7 @@ public class LobbyManager {
         //MM20241122: create lobby and register creator
         final String secretToken = UUID.randomUUID().toString();
         Lobby newLobby = new Lobby(lobbyIdCounter, secretToken, owner.getClientName());
-        newLobby.addPlayer(owner);
         lobbies.put(lobbyIdCounter, newLobby);
-
-        //MM20241122: register the most recently created lobby
-        lobbyByPlayer.put(owner.getClientName(), lobbyIdCounter);
 
         return new LobbyKey(lobbyIdCounter, secretToken);
     }
@@ -94,12 +90,14 @@ public class LobbyManager {
     //MM20241127: not LobbyManager
     public void removePlayerFromLobby(String playerName) throws LobbyLockedException {
         final Long previousLobbyId = lobbyByPlayer.get(playerName);
+        if(previousLobbyId == null){
+            return;
+        }
         lobbies.get(previousLobbyId).removePlayer(playerName);
         if (lobbies.get(previousLobbyId).getPlayers().isEmpty()) {
             removeLobby(previousLobbyId);
         }
         lobbyByPlayer.remove(playerName);
-
         System.out.println("Player '" + playerName + "' removed from lobby " + previousLobbyId);
     }
 }

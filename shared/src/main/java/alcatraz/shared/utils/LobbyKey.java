@@ -1,7 +1,9 @@
 
 package alcatraz.shared.utils;
 
-public class LobbyKey {
+import java.io.Serializable;
+
+public class LobbyKey implements Serializable {
     public final long lobbyId;
     public final String secret;
 
