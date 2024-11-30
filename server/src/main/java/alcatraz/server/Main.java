@@ -15,7 +15,6 @@ public class Main {
     public static void main(String[] args) {
         // TODO: it is missleading when everything is in one huge try catch block
         try {
-            String serverName = "Server1";
             int serverId = 1; // Default ID
 
             // TODO: it could be just an IP address of the server
@@ -28,15 +27,6 @@ public class Main {
             // Simple argument parsing
             for (int i = 0; i < args.length; i++) {
                 switch (args[i]) {
-                    case "-n":
-                    case "--name":
-                        if (i + 1 < args.length) {
-                            serverName = args[++i];
-                        } else {
-                            System.err.println("Error: Missing value for server name.");
-                            return;
-                        }
-                        break;
                     case "-id":
                     case "--server-id":
                         if (i + 1 < args.length) {
@@ -105,15 +95,15 @@ public class Main {
             SharedState sharedState = new SharedState();
             RMIManager rmiManager = new RMIManager(serverIdToPortMap);
 
-            Replication replication = new Replication(sharedState, rmiManager, spread, serverName, serverId);
+            Replication replication = new Replication(sharedState, rmiManager, spread, serverId);
             Server server = new Server(replication);
 
             // Start the RMI registry
             Registry registry = LocateRegistry.createRegistry(rmi.port);
             registry.bind("Alcatraz", server);
-            System.out.println(serverName + " started on RMI port " + rmi.port + ". Waiting for clients...");
+            System.out.println("Server " + serverId + " started on RMI port " + rmi.port + ". Waiting for clients...");
 
-            replication.joinServerGroup(serverName, serverId);
+            replication.joinServerGroup(serverId);
 
         } catch (Exception e) {
             e.printStackTrace();
