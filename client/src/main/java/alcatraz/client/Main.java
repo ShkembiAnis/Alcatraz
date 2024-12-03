@@ -18,7 +18,6 @@ public class Main {
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
             ServerInterface server = (ServerInterface) registry.lookup("Alcatraz");
-            //Lobby currentlobby = null;
 
             /**
              * Start of User interaction
@@ -86,16 +85,17 @@ public class Main {
                             case "1":
                                 /* Start Game */
                                 ArrayList<Player> lobbyPlayers = server.initializeGameStart(lobby.lobbyId, lobby.secret);
-                                for(int i = 1; i < lobbyPlayers.size(); i++){
+                                for(int i = 0; i < lobbyPlayers.size(); i++){
                                     try {
                                         if(!lobbyPlayers.get(i).getClientName().equals(clientName)){
                                             lobbyPlayers.get(i).getClient().startGame(lobbyPlayers, i);
+                                        }else{
+                                            lobbyPlayers.get(i).getClient().startGame(lobbyPlayers, 0);
                                         }
                                     } catch (RemoteException e) {
                                         throw new RuntimeException(e);
                                     }
                                 }
-                                client.startGame(lobbyPlayers, 0);
                                 break;
                             case "0":
                                 break;

@@ -3,23 +3,22 @@ package alcatraz.client;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 import alcatraz.shared.interfaces.ClientInterface;
 import alcatraz.shared.utils.Player;
 import alcatraz.shared.interfaces.ServerInterface;
 import at.falb.games.alcatraz.api.Alcatraz;
 import at.falb.games.alcatraz.api.IllegalMoveException;
-import at.falb.games.alcatraz.api.MoveListener;
 import at.falb.games.alcatraz.api.Prisoner;
 
 public class Client extends UnicastRemoteObject implements ClientInterface {
     private String clientId;
     private String clientName;
     private String client_ip_address;
+    private String client_port;
     private ArrayList<Player> lobbyPlayers;
-    private Alcatraz alcatraz = new Alcatraz();
-
+    private Alcatraz alcatraz;
+    private AlcatrazMoveListener alcatrazMoveListener;
 
     private ServerInterface server;
 
@@ -27,65 +26,42 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
         this.server = server;
         this.clientName = clientName;
     }
-    protected Client() throws RemoteException {
-    }
 
     @Override
-    public void doMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
+    public synchronized void broadcastMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
+        // Todo: check isPresent() for every client, if everybody answers broadcast the move
         for(Player playerEntry : lobbyPlayers){
             if(!playerEntry.getClientName().equals(clientName)){
-                playerEntry.getClient().receiveMove(player.getId(), prisoner.getId(), rowOrCol, row, col);
+                try {
+                    playerEntry.getClient().doMove(player, prisoner, rowOrCol, row, col);
+                }catch (RemoteException e){
+                    System.out.println("Player " + playerEntry.getClientName() + " was not reached ? ");
+                    // Todo: retry until player received the move, after that continue broadcasting
+                }
             }
         }
     }
 
     @Override
-    public void getMessage(String message) throws RemoteException {
-        System.out.println("Received Message: " + message);
+    public void isPresent() throws RemoteException {
+        System.out.println("Client " + clientName + " is present");
     }
 
     @Override
     public void startGame(ArrayList<Player> players, int myLobbyPlayerId) throws RemoteException {
+        this.alcatraz = new Alcatraz();
+        this.alcatrazMoveListener = new AlcatrazMoveListener(this);
         this.lobbyPlayers = players;
-        this.alcatraz.init(players.size(), myLobbyPlayerId);
-        this.alcatraz.addMoveListener(new MoveListener() {
-            @Override
-            public void moveDone(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) {
-                System.out.println(player.getName() + " moved prisoner " + prisoner +
-                        " to position: " + row + ", " + col);
-
-                // Broadcast the move to all clients
-                try {
-                    doMove(player, prisoner, rowOrCol, row, col);
-                } catch (RemoteException e) {
-                    System.out.println("Could not reach ");
-                }
-            }
-
-            @Override
-            public void gameWon(at.falb.games.alcatraz.api.Player winner) {
-                System.out.println("Game won by: " + winner.getName());
-            }
-        });
-        this.alcatraz.showWindow();
-        this.alcatraz.start();
-        System.out.println(alcatraz.getPlayer(myLobbyPlayerId).toString());
+        alcatraz.init(players.size(), myLobbyPlayerId);
+        alcatraz.addMoveListener(alcatrazMoveListener);
+        alcatraz.showWindow();
+        alcatraz.start();
         System.out.println("Game started");
     }
 
-    private void startTurn() throws RemoteException {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Your move: ");
-        String move = scanner.nextLine();
-        broadcastMove(move);
-    }
-
     @Override
-    public void receiveMove(int playerId, int prisonerId, int rowOrCol, int row, int col) throws RemoteException {
-        System.out.println("Move received from Player " + playerId + ": " + "Prisoner " + prisonerId + " to (" + row + ", " + col + ")");
-        at.falb.games.alcatraz.api.Player player = alcatraz.getPlayer(playerId);
-        Prisoner prisoner = alcatraz.getPrisoner(prisonerId);
-
+    public void doMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
+        System.out.println("Move received from Player " + player.getId() + ": " + "Prisoner " + prisoner.getId() + " to (" + row + ", " + col + ")");
         try{
             alcatraz.doMove(player, prisoner, rowOrCol, row, col);
         }catch (IllegalMoveException e) {
@@ -93,8 +69,4 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
         }
     }
 
-    private void broadcastMove(String move) throws RemoteException {
-        System.out.println("Broadcasting move: " + move);
-        return;
-    }
 }
