@@ -17,7 +17,10 @@ public class LobbyManager {
     private static final long MAXSIZE = 100;
 
     public LobbyManager() {
-        this.lobbyIdCounter = 0;
+        /*
+        *  todo: to discuss
+        */
+        this.lobbyIdCounter = 1;
         this.lobbies = new HashMap<>();
         this.lobbyByPlayer = new HashMap<>();
     }

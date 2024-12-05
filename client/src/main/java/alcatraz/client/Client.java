@@ -28,19 +28,29 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
     }
 
     @Override
-    public synchronized void broadcastMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
-        // Todo: check isPresent() for every client, if everybody answers broadcast the move
-        for(Player playerEntry : lobbyPlayers){
-            if(!playerEntry.getClientName().equals(clientName)){
-                try {
-                    playerEntry.getClient().doMove(player, prisoner, rowOrCol, row, col);
-                }catch (RemoteException e){
-                    System.out.println("Player " + playerEntry.getClientName() + " was not reached ? ");
-                    // Todo: retry until player received the move, after that continue broadcasting
+        public synchronized void broadcastMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
+            for(Player playerEntry : lobbyPlayers){
+                if(!playerEntry.getClientName().equals(clientName)){
+                    boolean moveDeliverd = false;
+                    while(!moveDeliverd){
+                        try {
+                            playerEntry.getClient().doMove(player, prisoner, rowOrCol, row, col);
+                            moveDeliverd = true;
+                        }catch (RemoteException e){
+                            System.out.println("Player " + playerEntry.getClientName() + " was not reached ? ");
+                            try{
+                                Thread.sleep(5000);
+                            }catch (InterruptedException ex) {
+                                // we dont want to end here !
+                                System.out.println("Retry mechanism interrupted. Stopping retries for player: " + playerEntry.getClientName());
+                                Thread.currentThread().interrupt(); // Restore the interrupted status
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
-    }
 
     @Override
     public void isPresent() throws RemoteException {
