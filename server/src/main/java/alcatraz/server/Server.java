@@ -2,9 +2,7 @@ package alcatraz.server;
 
 import alcatraz.server.replication.ReplicationInterface;
 import alcatraz.server.state.SharedState;
-import alcatraz.shared.exceptions.DuplicateNameException;
-import alcatraz.shared.exceptions.NotEnoughPlayersException;
-import alcatraz.shared.exceptions.PlayerNotRegisteredException;
+import alcatraz.shared.exceptions.*;
 import alcatraz.shared.interfaces.ClientInterface;
 import alcatraz.shared.interfaces.ServerInterface;
 import alcatraz.shared.utils.Lobby;
@@ -126,36 +124,19 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     @Override
     public ArrayList<Player> initializeGameStart(long lobbyId, String secret) throws RemoteException {
         if (!this.replication.isPrimary()) {
-            this.replication.getPrimaryServer().initializeGameStart(lobbyId, secret);
-            return null;
+            return this.replication.getPrimaryServer().initializeGameStart(lobbyId, secret);
         }
 
         this.fairLock.lock();
         Lobby gameLobby = this.state.lobbyManager.getLobbyById(lobbyId);
         if (!gameLobby.checkSecret(secret)) {
             fairLock.unlock();
-            return null;
+            throw new LobbyKeyIncorrect();
         }
 
+        gameLobby.setUnavailable();
 
-//        gameLobby.getPlayers().forEach((playerName, player) -> {
-//            try {
-//                ClientInterface client = player.getClient();
-//                if (client != null) {
-//                    System.out.println("Starting game for client: " + player.getClientName() + " in lobby " + gameLobby.getId());
-//                    client.startGame(gameLobby);        //MM20241127: after today's discussion, this must be renamed to "isPresent()"
-//                } else {
-//                    gameLobby.removePlayer(playerName, true);
-//                    System.out.println("ClientInterface not found for player: " + player.getClientName());
-//                }
-//            } catch (LobbyLockedException e) { //MM20241128: do nothing when removePlayer fails?
-//            } catch (RemoteException e) {
-//                try {
-//                    gameLobby.removePlayer(playerName, true);      //MM20241127: "true" prevents from exception
-//                } catch (LobbyLockedException e1) { //MM20241128: do nothing when removePlayer fails?
-//                }
-//            }
-//        });
+        this.removeUnavailablePlayersFromLobby(gameLobby);
 
         if (!gameLobby.canBePlayed(secret)) {
             gameLobby.setAvailable();
@@ -165,23 +146,49 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
             fairLock.unlock();
             throw new NotEnoughPlayersException(lobbyId);
         }
-        gameLobby.setUnavailable();
+
         this.replication.replicatePrimaryState();
 
         fairLock.unlock();
 
-        ArrayList <Player> playersOrder = new ArrayList<Player>();
-        Player owner = gameLobby.getPlayer(gameLobby.getOwner());
-        if(owner != null) {
-            playersOrder.add(owner);
-        }
+        return getListOfPlayers(gameLobby);
+    }
 
-        gameLobby.getPlayers().forEach((key, player) -> {
-            if (!Objects.equals(key, gameLobby.getOwner())) {
-                playersOrder.add(player); // Add other players
+    public static ArrayList<Player> getListOfPlayers(Lobby gameLobby) {
+        Player owner = gameLobby.getPlayers().get(gameLobby.getOwner());
+
+        // owner of the game should be the first player
+        ArrayList<Player> players = new ArrayList<>(List.of(owner));
+
+        // all the other players are added after the owner
+        gameLobby.getPlayers().values().stream()
+                .filter(player -> !player.getClientName().equals(gameLobby.getOwner()))
+                .forEach(players::add);
+
+        return players;
+    }
+
+
+    private void removeUnavailablePlayersFromLobby(Lobby gameLobby) {
+        gameLobby.getPlayers().forEach((playerName, player) -> {
+            try {
+                ClientInterface client = player.getClient();
+                if (client != null) {
+                    System.out.println("Starting game for client: " + player.getClientName() + " in lobby " + gameLobby.getId());
+//                    client.startGame(gameLobby);        //MM20241127: after today's discussion, this must be renamed to "isPresent()"
+                } else {
+                    gameLobby.removePlayer(playerName, true);
+                    System.out.println("ClientInterface not found for player: " + player.getClientName());
+                }
+            } catch (LobbyLockedException e) { //MM20241128: do nothing when removePlayer fails?
+//                TODO: Uncomment when the client implements the isPresent() method
+//            } catch (RemoteException e) {
+//                try {
+//                    gameLobby.removePlayer(playerName, true);      //MM20241127: "true" prevents from exception
+//                } catch (LobbyLockedException e1) { //MM20241128: do nothing when removePlayer fails?
+//                }
             }
         });
-        return playersOrder;
     }
 
 }

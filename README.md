@@ -17,6 +17,7 @@ Java - 21
 1. Edit Configurations
 2. Create 3 Server Configurations
 3. Set in the every of them different **Program arguments**:
+
   - `-id 1 -s localhost -sp 4803 -g ServerGroup`
   - `-id 2 -s localhost -sp 4803 -g ServerGroup`
   - `-id 3 -s localhost -sp 4803 -g ServerGroup`
