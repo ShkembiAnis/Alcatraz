@@ -17,9 +17,9 @@ Java - 21
 1. Edit Configurations
 2. Create 3 Server Configurations
 3. Set in the every of them different **Program arguments**:
-  - `-n Server1 -id 1 -p 1099 -s localhost -sp 4803`
-  - `-n Server2 -id 2 -p 1100 -s localhost -sp 4803`
-  - `-n Server3 -id 3 -p 1101 -s localhost -sp 4803`
+  - `-id 1 -p 1099 -s localhost -sp 4803`
+  - `-id 2 -p 1100 -s localhost -sp 4803`
+  - `-id 3 -p 1101 -s localhost -sp 4803`
 
 # HOW TO RUN?
 0. Go to root project directory
