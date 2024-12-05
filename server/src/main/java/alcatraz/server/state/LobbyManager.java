@@ -13,16 +13,20 @@ import alcatraz.shared.utils.Player;
 public class LobbyManager {
     private HashMap<Long, Lobby> lobbies = new HashMap<>();
     private HashMap<String, Long> lobbyByPlayer = new HashMap<>();
-    private long lobbyIdCounter;
+    private long lobbyIdCounter = 0;        //MM20241205: 0 is a magic number for the client; however, will be checked
+                                            //              upon calculation.
     private static final long MAXSIZE = 100;
 
-    public LobbyManager() {
-        /*
-        *  todo: to discuss
-        */
-        this.lobbyIdCounter = 1;
-        this.lobbies = new HashMap<>();
-        this.lobbyByPlayer = new HashMap<>();
+    /*
+    * @brief: ensure that we have no problems with the lobbyId's by taking the next free lobbyId and restarting the
+    *           search at one, once the highest possible lobbyId (MAXSIZE) was found
+     */
+    private void determineFreeLobbyIdCounter() {
+        while (lobbyIdCounter == 0 || lobbies.containsKey(lobbyIdCounter)) {
+            lobbyIdCounter = (++lobbyIdCounter) % (MAXSIZE + 1);    //MM20241205: MAXSIZE is the highest lobbyId;
+                                                                    //              (x % (MAXSIZE + 1)) == 0,
+                                                                    //              when x == (MAXSIZE + 1)
+        }
     }
 
     /*
@@ -36,18 +40,17 @@ public class LobbyManager {
             throw new TooManyLobbiesException();
         }
 
-        while (lobbies.containsKey(lobbyIdCounter)) {
-            ++lobbyIdCounter;
-        }
+        determineFreeLobbyIdCounter();      //MM20241205: not entirely happy, because no return value, but should work
+
         //MM20241122: Each player can only be in one lobby.
         removePlayerFromLobby(owner.getClientName());
 
         //MM20241122: create lobby and register creator
         final String secretToken = UUID.randomUUID().toString();
-        Lobby newLobby = new Lobby(lobbyIdCounter,owner.getClientName(), secretToken);
-        lobbies.put(lobbyIdCounter, newLobby);
+        Lobby newLobby = new Lobby(this.lobbyIdCounter,owner.getClientName(), secretToken);
+        lobbies.put(this.lobbyIdCounter, newLobby);
 
-        return new LobbyKey(lobbyIdCounter, secretToken);
+        return new LobbyKey(this.lobbyIdCounter, secretToken);
     }
 
     private void removeLobby(long lobbyId) {
