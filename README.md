@@ -17,9 +17,9 @@ Java - 21
 1. Edit Configurations
 2. Create 3 Server Configurations
 3. Set in the every of them different **Program arguments**:
-  - `-n Server1 -id 1 -p 1099 -s localhost -sp 4803`
-  - `-n Server2 -id 2 -p 1100 -s localhost -sp 4803`
-  - `-n Server3 -id 3 -p 1101 -s localhost -sp 4803`
+  - `-id 1 -s localhost -sp 4803 -g ServerGroup`
+  - `-id 2 -s localhost -sp 4803 -g ServerGroup`
+  - `-id 3 -s localhost -sp 4803 -g ServerGroup`
 
 # HOW TO RUN?
 0. Go to root project directory
@@ -52,6 +52,23 @@ Spread_Segment <MULTICAST_ADDRESS_OF_YOUR_NETWORK>:4803 {
 4. Run spread
 - execute `spread-bin-4.0.0/bin/win32/spread.exe`
 
+5. Add RMI Settings in **root folder of the project** with name `rmi.json`:
+```json
+{
+  "1": {
+    "ip": "localhost",
+    "port": 1099
+  },
+  "2": {
+    "ip": "localhost",
+    "port": 1100
+  },
+  "3": {
+    "ip": "localhost",
+    "port": 1101
+  }
+}
+```
 
 5. Run the server
 ```shell
