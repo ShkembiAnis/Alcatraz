@@ -5,10 +5,8 @@ import alcatraz.server.spread.Spread;
 import alcatraz.server.replication.Replication;
 import alcatraz.server.state.SharedState;
 import alcatraz.server.rmi.RMI;
-
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.HashMap;
 import java.util.Map;
 
 public class Main {
@@ -17,12 +15,8 @@ public class Main {
         try {
             int serverId = 1; // Default ID
 
-            // TODO: it could be just an IP address of the server
-            //  not only spread since we need it for RMI too
+            // default settings of spread that should be overridden by program arguments
             Spread spread = new Spread("localhost", 4803, "ServerGroup");
-            RMI rmi = new RMI(spread.host, 1099);
-
-            boolean verbose = false;
 
             // Simple argument parsing
             for (int i = 0; i < args.length; i++) {
@@ -33,15 +27,6 @@ public class Main {
                             serverId = Integer.parseInt(args[++i]);
                         } else {
                             System.err.println("Error: Missing value for server ID.");
-                            return;
-                        }
-                        break;
-                    case "-p":
-                    case "--rmi-port":
-                        if (i + 1 < args.length) {
-                            rmi.port = Integer.parseInt(args[++i]);
-                        } else {
-                            System.err.println("Error: Missing value for RMI port.");
                             return;
                         }
                         break;
@@ -72,36 +57,26 @@ public class Main {
                             return;
                         }
                         break;
-                    case "-v":
-                    case "--verbose":
-                        verbose = true;
-                        break;
                     default:
                         System.err.println("Unknown argument: " + args[i]);
                         return;
                 }
             }
 
-            // TODO: it should not be localhost, but a received IP address
-            // the servers have to know which IP addresses they have
-            // but it is not new since we have to know the IP address of the spread server
-            Map<Integer, RMI> serverIdToPortMap = new HashMap<>();
-            serverIdToPortMap.put(1, new RMI(spread.host, 1099));
-            serverIdToPortMap.put(2, new RMI(spread.host, 1100));
-            serverIdToPortMap.put(3, new RMI(spread.host, 1101));
-
+            Map<Integer, RMI> rmiServers = RMI.getRMISettings(System.getProperty("user.dir") + "/rmi.json");
 
             // Create the server with the parsed parameters
-            SharedState sharedState = new SharedState();
-            RMIManager rmiManager = new RMIManager(serverIdToPortMap);
+            RMI localRmi = rmiServers.get(serverId);
+            RMIManager rmiManager = new RMIManager(rmiServers);
 
+            SharedState sharedState = new SharedState();
             Replication replication = new Replication(sharedState, rmiManager, spread, serverId);
             Server server = new Server(replication);
 
             // Start the RMI registry
-            Registry registry = LocateRegistry.createRegistry(rmi.port);
-            registry.bind("Alcatraz", server);
-            System.out.println("Server " + serverId + " started on RMI port " + rmi.port + ". Waiting for clients...");
+            Registry registry = LocateRegistry.createRegistry(localRmi.port);
+            registry.bind(RMI.remoteObjectName, server);
+            System.out.println("Server " + serverId + " started on RMI port " + localRmi.port + ". Waiting for clients...");
 
             replication.joinServerGroup(serverId);
 

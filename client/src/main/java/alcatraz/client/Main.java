@@ -18,94 +18,15 @@ public class Main {
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
             ServerInterface server = (ServerInterface) registry.lookup("Alcatraz");
-            //Lobby currentlobby = null;
-
-            /**
-             * Start of User interaction
-             */
 
             Scanner scanner = new Scanner(System.in);
-            System.out.print("Enter your name: ");
             String clientName = register_GetClientName(server);
-            ClientInterface client = new Client(server, clientName);
+            ClientInterface client = new Client(server, clientName); //
 
-            /**
-             * Start of Menu: 2 Options
-             * 1. showAvailableLobbies
-             * 2. createLobby
-             */
-
-            while(true){
-                System.out.println("Menu1:  (1)showAvailableLobbies (2)createLobby");
-                String menu1Input = scanner.nextLine();
-                switch (menu1Input){
-                    case "1":
-                        System.out.println("Show available Lobbies...");
-                        System.out.println("Listing lobbies:");
-                        Map<Long, Lobby> lobbies = server.getLobbies();
-                        for (Map.Entry<Long, Lobby> entry : lobbies.entrySet()) {
-                            Lobby lobbyEntry = entry.getValue(); // The value (List<String>)
-                            System.out.println("Lobby: " + lobbyEntry.getId() + " Players: " + lobbyEntry.getPlayers().size() + " ownerId:" + lobbyEntry.getOwner());
-                        }
-                        System.out.println("Enter a lobbyID, to join a lobby (enter 0 to exit Lobby-List)");
-                        String joinLobbyIdInput = scanner.nextLine();
-                        try {
-                            server.joinLobby( clientName, Long.valueOf(joinLobbyIdInput));
-                            System.out.println("Lobby" + lobbies.get(Long.valueOf(joinLobbyIdInput)).getId() + " joined.");
-                            System.out.println("Waiting For Game Start...");
-
-                        /**
-                         * Guest Menu
-                         */
-
-                            System.out.println("Players:" + (lobbies.get(Long.valueOf(joinLobbyIdInput)).getPlayers().size()+1) + " LobbyId:" + lobbies.get(Long.valueOf(joinLobbyIdInput)).getId());
-                            System.out.println(" enter 0 exit");
-                            while (true){
-                                String wantsExitsQuestionmark = scanner.nextLine();
-                                if(wantsExitsQuestionmark.equals("0")){
-                                break;
-                                }
-                            }
-                        } catch (RemoteException e) {
-                            System.out.println("Could not join lobby.");
-                        }
-
-                        break;
-                    case "2":
-                        System.out.println("Creating Lobby...");
-                        LobbyKey lobby = server.createLobby(clientName);
-                        System.out.println("Lobby created with id: " + lobby.lobbyId);
-                        /**
-                         * Owner LobbyMenu
-                         * responsible for the start of the game
-                         */
-
-                        System.out.println("Lobby Menu: (1) start game (0 exit Lobby)");
-                        String ownerLobbyMenuInput = scanner.nextLine();
-                        switch (ownerLobbyMenuInput){
-                            case "1":
-                                /* Start Game */
-                                ArrayList<Player> lobbyPlayers = server.initializeGameStart(lobby.lobbyId, lobby.secret);
-                                for(int i = 1; i < lobbyPlayers.size(); i++){
-                                    try {
-                                        if(!lobbyPlayers.get(i).getClientName().equals(clientName)){
-                                            lobbyPlayers.get(i).getClient().startGame(lobbyPlayers, i);
-                                        }
-                                    } catch (RemoteException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                }
-                                client.startGame(lobbyPlayers, 0);
-                                break;
-                            case "0":
-                                break;
-                        }
-                        break;
-                    default:
-                        break;
-                }
+            // Main menu loop
+            while (true) {
+                showMainMenu(scanner, server, clientName);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -114,6 +35,7 @@ public class Main {
     private static String register_GetClientName(ServerInterface server) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
         String clientName = "";
+        System.out.print("Enter your name: ");
         while (true) {
             clientName = scanner.nextLine();
             ClientInterface client = new Client(server, clientName);
@@ -122,10 +44,111 @@ public class Main {
                 System.out.println(clientName + " registered");
                 break;
             } catch (Exception e) {
-                System.out.println("The Username " + clientName + " already exits.");
-                System.out.println("Enter your name: ");
+                System.out.println("The Username " + clientName + " already exists.");
+                System.out.print("Enter your name: ");
             }
         }
         return clientName;
+    }
+
+    private static void showMainMenu(Scanner scanner, ServerInterface server, String clientName) throws RemoteException {
+        System.out.println("Main Menu: (1) Show Available Lobbies (2) Create Lobby (0) Exit");
+        String menuInput = scanner.nextLine();
+
+        switch (menuInput) {
+            case "1":
+                showAvailableLobbies(scanner, server, clientName);
+                break;
+            case "2":
+                createLobby(scanner, server, clientName);
+                break;
+            case "0":
+                System.out.println("Exiting...");
+                System.exit(0);
+                break;
+            default:
+                System.out.println("Invalid option. Please try again.");
+                break;
+        }
+    }
+
+    private static void showAvailableLobbies(Scanner scanner, ServerInterface server, String clientName) throws RemoteException {
+        System.out.println("Showing available lobbies...");
+        Map<Long, Lobby> lobbies = server.getLobbies();
+
+        if (lobbies.isEmpty()) {
+            System.out.println("No available lobbies.");
+            return;
+        }
+
+        for (Map.Entry<Long, Lobby> entry : lobbies.entrySet()) {
+            Lobby lobby = entry.getValue();
+            System.out.println("Lobby ID: " + lobby.getId() + " | Players: " + lobby.getPlayers().size() + " | Owner: " + lobby.getOwner());
+        }
+
+        System.out.print("Enter a Lobby ID to join (0 to cancel): ");
+        String lobbyIdInput = scanner.nextLine();
+
+        if (lobbyIdInput.equals("0")) {
+            System.out.println("Returning to main menu...");
+            return;
+        }
+
+        try {
+            server.joinLobby(clientName, Long.valueOf(lobbyIdInput));
+            System.out.println("Joined Lobby " + lobbyIdInput);
+            guestLobbyMenu(scanner, server, Long.valueOf(lobbyIdInput));
+        } catch (RemoteException e) {
+            System.out.println("Failed to join lobby. Please try again.");
+        }
+    }
+
+    private static void createLobby(Scanner scanner, ServerInterface server, String clientName) throws RemoteException {
+        System.out.println("Creating a new lobby...");
+        LobbyKey lobbyKey = server.createLobby(clientName);
+        System.out.println("Lobby created with ID: " + lobbyKey.lobbyId);
+        ownerLobbyMenu(scanner, server, lobbyKey);
+    }
+
+    private static void guestLobbyMenu(Scanner scanner, ServerInterface server, Long lobbyId) throws RemoteException {
+        System.out.println("Guest Lobby Menu: (0) Exit Lobby");
+        while (true) {
+            String input = scanner.nextLine();
+            if (input.equals("0")) {
+                System.out.println("Exiting lobby...");
+                break;
+            } else {
+                System.out.println("Invalid option. Press 0 to exit.");
+            }
+        }
+    }
+
+    private static void ownerLobbyMenu(Scanner scanner, ServerInterface server, LobbyKey lobbyKey) throws RemoteException {
+        System.out.println("Owner Lobby Menu: (1) Start Game (0) Exit Lobby");
+        String input = scanner.nextLine();
+
+        switch (input) {
+            case "1":
+                System.out.println("Starting game...");
+                ArrayList<Player> players = server.initializeGameStart(lobbyKey.lobbyId, lobbyKey.secret);
+                for (int i = 0; i < players.size(); i++) {
+                    try {
+                        players.get(i).getClient().startGame(players, i);
+                    } catch (RemoteException e) {
+                        System.out.println("Failed to start game for player: " + players.get(i).getClientName());
+                        /*
+                         * todo: retry until reached or abort because server provides clientInterfaces ?
+                         *  how can we be sure that nobody reaches this section
+                         */
+                    }
+                }
+                break;
+            case "0":
+                System.out.println("Exiting lobby...");
+                break;
+            default:
+                System.out.println("Invalid option. Returning to main menu...");
+                break;
+        }
     }
 }
