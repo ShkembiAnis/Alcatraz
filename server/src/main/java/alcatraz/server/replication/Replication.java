@@ -62,6 +62,7 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
         SpreadMessage msg = new SpreadMessage();
         msg.setReliable();
         msg.addGroup(spread.groupName);
+        msg.setSelfDiscard(true);
 
         try {
             msg.setObject(replicationDTO);
