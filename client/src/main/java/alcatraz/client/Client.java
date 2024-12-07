@@ -22,7 +22,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
     private ServerInterface server;
 
-    protected Client(ServerInterface server, String clientName) throws RemoteException {
+    public Client(ServerInterface server, String clientName) throws RemoteException {
         this.server = server;
         this.clientName = clientName;
     }
@@ -36,6 +36,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
                         try {
                             playerEntry.getClient().doMove(player, prisoner, rowOrCol, row, col);
                             moveDeliverd = true;
+                            break;
                         }catch (RemoteException e){
                             System.out.println("Player " + playerEntry.getClientName() + " was not reached ? ");
                             try{
