@@ -1,6 +1,7 @@
 package alcatraz.client;
 
 import java.rmi.RemoteException;
+import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,20 +35,25 @@ public class Main {
     private static String register_GetClientName(ServerWrapper serverWrapper) {
         Scanner scanner = new Scanner(System.in);
         String clientName = "";
-        System.out.print("Enter your name: ");
         while (true) {
+            System.out.print("Enter your name: ");
             clientName = scanner.nextLine();
             try {
                 String finalClientName = clientName;
                 serverWrapper.registerPlayer(finalClientName);
                 System.out.println(clientName + " registered");
                 break;
-            } catch (DuplicateNameException e) {
-                System.out.println(e.getMessage());
+            } catch (ServerException e) {
+                String errorMsg = HandleException.handleCauseException(
+                        e.getCause(),
+                        DuplicateNameException.class);
+
+                System.out.println(errorMsg);
+                continue;
             } catch (RemoteException e) {
-                System.out.println("Unexpected Error: ");
                 e.printStackTrace();
             }
+            System.out.println("Unexpected Error!");
         }
         return clientName;
     }
@@ -109,10 +115,14 @@ public class Main {
         try{
             serverWrapper.joinLobby(clientName, Long.valueOf(lobbyIdInput));
             System.out.println("Joined Lobby " + lobbyIdInput);
-        }catch(PlayerNotRegisteredException e){
-            System.out.println(e.getMessage());
         } catch (RemoteException e) {
-            System.out.println("Unexpected Error");
+            String errorMsg = HandleException.handleCauseException(
+                    e.getCause(),
+                    PlayerNotRegisteredException.class,
+                    LobbyLockedException.class,
+                    LobbyFullException.class);
+
+            System.out.println(errorMsg);
         }
         guestLobbyMenu(scanner, serverWrapper, Long.valueOf(lobbyIdInput), clientName);
     }
@@ -121,9 +131,15 @@ public class Main {
         LobbyKey lobbyKey = null;
         try {
             lobbyKey = serverWrapper.createLobby(clientName);
-        } catch (Exception e) {
-            System.out.println("Failed to create lobby: " + e.getMessage());
+        } catch (RemoteException e) {
+            String errorMsg = HandleException.handleCauseException(
+                    e.getCause(),
+                    TooManyLobbiesException.class,
+                    LobbyLockedException.class);
+
+            System.out.println(errorMsg);
         }
+
         ownerLobbyMenu(scanner, serverWrapper, lobbyKey, clientName);
     }
 
@@ -136,10 +152,12 @@ public class Main {
                 System.out.println("Exiting lobby...");
                 try{
                     serverWrapper.leaveLobby(clientName);
-                }catch (LobbyLockedException e){
-                    System.out.println(e.getMessage());
                 } catch (RemoteException e) {
-                    System.out.println(e.getCause().getMessage());
+                    String errorMsg = HandleException.handleCauseException(
+                            e.getCause(),
+                            LobbyLockedException.class);
+
+                    System.out.println(errorMsg);
                 }
                 break;
             } else {
@@ -158,14 +176,19 @@ public class Main {
                 ArrayList<Player> players = new ArrayList<>();
                 try{
                     players = serverWrapper.initializeGameStart(lobbyKey.lobbyId, lobbyKey.secret);
-                }catch (LobbyFullException | LobbyKeyIncorrect e){
-                    System.out.println(e.getMessage());
-                    break;
-                } catch (RemoteException e){
-                    System.out.println("Unexpected Error");
+                } catch (RemoteException e) {
+                    String errorMsg = HandleException.handleCauseException(
+                            e.getCause(),
+                            LobbyKeyIncorrect.class,
+                            NotEnoughPlayersException.class
+                    );
+
+                    System.out.println(errorMsg);
                     break;
                 }
 
+                // todo: shouldn't, the ckecing if clients are present, be done from server side?
+                // todo: at least that's how we discussed it before (look at the diagram)
                 for (int i = 0; i < players.size(); i++) {
                     try {
                         players.get(i).getClient().isPresent();
@@ -187,10 +210,12 @@ public class Main {
                 System.out.println("Exiting lobby...");
                 try{
                     serverWrapper.leaveLobby(clientName);
-                }catch (LobbyLockedException e){
-                    System.out.println(e.getMessage());
                 } catch (RemoteException e) {
-                    System.out.println("Unexpected Error");
+                    String errorMsg = HandleException.handleCauseException(
+                            e.getCause(),
+                            LobbyLockedException.class);
+
+                    System.out.println(errorMsg);
                 }
                 break;
             default:
