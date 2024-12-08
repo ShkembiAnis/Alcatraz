@@ -6,8 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import alcatraz.shared.exceptions.DuplicateNameException;
-import alcatraz.shared.exceptions.PlayerNotRegisteredException;
+import alcatraz.shared.exceptions.*;
 import alcatraz.shared.rmi.RMI;
 import alcatraz.shared.utils.Lobby;
 import alcatraz.shared.utils.LobbyKey;
@@ -67,6 +66,7 @@ public class Main {
                     break;
                 case "0":
                     System.out.println("Exiting...");
+                    //todo: Hier sollte eigentlich der Spieler gelöscht werden.
                     System.exit(0);
                     break;
                 default:
@@ -114,7 +114,7 @@ public class Main {
         } catch (RemoteException e) {
             System.out.println("Unexpected Error");
         }
-        guestLobbyMenu(scanner, serverWrapper, Long.valueOf(lobbyIdInput));
+        guestLobbyMenu(scanner, serverWrapper, Long.valueOf(lobbyIdInput), clientName);
     }
 
     private static void createLobby(Scanner scanner, ServerWrapper serverWrapper, String clientName) {
@@ -124,16 +124,23 @@ public class Main {
         } catch (Exception e) {
             System.out.println("Failed to create lobby: " + e.getMessage());
         }
-        ownerLobbyMenu(scanner, serverWrapper, lobbyKey);
+        ownerLobbyMenu(scanner, serverWrapper, lobbyKey, clientName);
     }
 
     //todo: handle Input from User
-    private static void guestLobbyMenu(Scanner scanner, ServerWrapper server, Long lobbyId) {
+    private static void guestLobbyMenu(Scanner scanner, ServerWrapper serverWrapper, Long lobbyId, String clientName) {
         System.out.println("Guest Lobby Menu: (0) Exit Lobby");
         while (true) {
             String input = scanner.nextLine();
             if (input.equals("0")) {
                 System.out.println("Exiting lobby...");
+                try{
+                    serverWrapper.leaveLobby(clientName);
+                }catch (LobbyLockedException e){
+                    System.out.println(e.getMessage());
+                } catch (RemoteException e) {
+                    System.out.println(e.getCause().getMessage());
+                }
                 break;
             } else {
                 System.out.println("Invalid option. Press 0 to exit.");
@@ -141,33 +148,55 @@ public class Main {
         }
     }
 
-    private static void ownerLobbyMenu(Scanner scanner, ServerWrapper serverWrapper, LobbyKey lobbyKey) {
+    private static void ownerLobbyMenu(Scanner scanner, ServerWrapper serverWrapper, LobbyKey lobbyKey, String clientName) {
         System.out.println("Owner Lobby Menu: (1) Start Game (0) Exit Lobby");
         String input = scanner.nextLine();
 
-        try {
-            switch (input) {
-                case "1":
-                    System.out.println("Starting game...");
-                    ArrayList<Player> players = serverWrapper.initializeGameStart(lobbyKey.lobbyId, lobbyKey.secret);
-                    for (int i = 0; i < players.size(); i++) {
-                        try {
-                            players.get(i).getClient().startGame(players, i);
-                        } catch (RemoteException e) {
-                            System.out.println("Failed to start game for player: " + players.get(i).getClientName());
-                            // Optionally retry or log the failure
-                        }
+        switch (input) {
+            case "1":
+                System.out.println("Starting game...");
+                ArrayList<Player> players = new ArrayList<>();
+                try{
+                    players = serverWrapper.initializeGameStart(lobbyKey.lobbyId, lobbyKey.secret);
+                }catch (LobbyFullException | LobbyKeyIncorrect e){
+                    System.out.println(e.getMessage());
+                    break;
+                } catch (RemoteException e){
+                    System.out.println("Unexpected Error");
+                    break;
+                }
+
+                for (int i = 0; i < players.size(); i++) {
+                    try {
+                        players.get(i).getClient().isPresent();
+                    } catch (RemoteException e) {
+                        System.out.println("Unexpected Error");
+                        break;
                     }
-                    break;
-                case "0":
-                    System.out.println("Exiting lobby...");
-                    break;
-                default:
-                    System.out.println("Invalid option. Returning to main menu...");
-                    break;
-            }
-        } catch (RemoteException e) {
-            System.out.println("An error occurred while starting the game: " + e.getMessage());
+                }
+
+                for (int i = 0; i < players.size(); i++) {
+                    try {
+                        players.get(i).getClient().startGame(players, i);
+                    } catch (RemoteException e) {
+                        System.out.println("Unexpected Error. Could not reach player: " + players.get(i).getClientName());
+                    }
+                }
+                break;
+            case "0":
+                System.out.println("Exiting lobby...");
+                try{
+                    serverWrapper.leaveLobby(clientName);
+                }catch (LobbyLockedException e){
+                    System.out.println(e.getMessage());
+                } catch (RemoteException e) {
+                    System.out.println("Unexpected Error");
+                }
+                break;
+            default:
+                System.out.println("Invalid option.");
+                break;
         }
+
     }
 }
