@@ -1,10 +1,10 @@
 package alcatraz.server;
 
-import alcatraz.server.rmi.RMIManager;
+import alcatraz.shared.rmi.RMIManager;
 import alcatraz.server.spread.Spread;
 import alcatraz.server.replication.Replication;
 import alcatraz.server.state.SharedState;
-import alcatraz.server.rmi.RMI;
+import alcatraz.shared.rmi.RMI;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Map;

@@ -1,7 +1,7 @@
 package alcatraz.server.replication;
 
 import alcatraz.server.replication.dto.ReplicationDTO;
-import alcatraz.server.rmi.RMIManager;
+import alcatraz.shared.rmi.RMIManager;
 import alcatraz.server.spread.Spread;
 import alcatraz.server.state.SharedState;
 import alcatraz.shared.utils.Lobby;

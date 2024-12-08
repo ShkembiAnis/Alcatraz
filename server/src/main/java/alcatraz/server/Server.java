@@ -134,19 +134,17 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
             throw new LobbyKeyIncorrect();
         }
 
-        gameLobby.setUnavailable();
+
 
         this.removeUnavailablePlayersFromLobby(gameLobby);
 
         if (!gameLobby.canBePlayed(secret)) {
             gameLobby.setAvailable();
-
             replication.replicatePrimaryState();
-
             fairLock.unlock();
             throw new NotEnoughPlayersException(lobbyId);
         }
-
+        gameLobby.setUnavailable();
         this.replication.replicatePrimaryState();
 
         fairLock.unlock();

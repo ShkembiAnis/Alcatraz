@@ -1,84 +1,102 @@
 package alcatraz.client;
 
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
+import java.rmi.ServerException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import alcatraz.shared.interfaces.ClientInterface;
+import alcatraz.shared.exceptions.*;
+import alcatraz.shared.rmi.RMI;
 import alcatraz.shared.utils.Lobby;
 import alcatraz.shared.utils.LobbyKey;
-import alcatraz.shared.interfaces.ServerInterface;
 import alcatraz.shared.utils.Player;
 
 public class Main {
     public static void main(String[] args) {
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
-            ServerInterface server = (ServerInterface) registry.lookup("Alcatraz");
+            // Set up servers
+            Map<Integer, RMI> rmiList = RMI.getRMISettings(System.getProperty("user.dir") +  "/rmi.json");
+            ServerWrapper serverWrapper = new ServerWrapper(new ArrayList<>(rmiList.values()));
 
             Scanner scanner = new Scanner(System.in);
-            String clientName = register_GetClientName(server);
-            ClientInterface client = new Client(server, clientName); //
+            String clientName = register_GetClientName(serverWrapper);
 
             // Main menu loop
             while (true) {
-                showMainMenu(scanner, server, clientName);
+                showMainMenu(scanner, serverWrapper, clientName);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static String register_GetClientName(ServerInterface server) throws RemoteException {
+    private static String register_GetClientName(ServerWrapper serverWrapper) {
         Scanner scanner = new Scanner(System.in);
         String clientName = "";
-        System.out.print("Enter your name: ");
         while (true) {
+            System.out.print("Enter your name: ");
             clientName = scanner.nextLine();
-            ClientInterface client = new Client(server, clientName);
             try {
-                server.registerPlayer(clientName, client);
+                String finalClientName = clientName;
+                serverWrapper.registerPlayer(finalClientName);
                 System.out.println(clientName + " registered");
                 break;
-            } catch (Exception e) {
-                System.out.println("The Username " + clientName + " already exists.");
-                System.out.print("Enter your name: ");
+            } catch (ServerException e) {
+                String errorMsg = HandleException.handleCauseException(
+                        e.getCause(),
+                        DuplicateNameException.class);
+
+                System.out.println(errorMsg);
+                continue;
+            } catch (RemoteException e) {
+                e.printStackTrace();
             }
+            System.out.println("Unexpected Error!");
         }
         return clientName;
     }
 
-    private static void showMainMenu(Scanner scanner, ServerInterface server, String clientName) throws RemoteException {
-        System.out.println("Main Menu: (1) Show Available Lobbies (2) Create Lobby (0) Exit");
-        String menuInput = scanner.nextLine();
+    private static void showMainMenu(Scanner scanner, ServerWrapper serverWrapper, String clientName) {
+        try {
+            System.out.println("Main Menu: (1) Show Available Lobbies (2) Create Lobby (0) Exit");
+            String menuInput = scanner.nextLine();
 
-        switch (menuInput) {
-            case "1":
-                showAvailableLobbies(scanner, server, clientName);
-                break;
-            case "2":
-                createLobby(scanner, server, clientName);
-                break;
-            case "0":
-                System.out.println("Exiting...");
-                System.exit(0);
-                break;
-            default:
-                System.out.println("Invalid option. Please try again.");
-                break;
+            switch (menuInput) {
+                case "1":
+                    showAvailableLobbies(scanner, serverWrapper, clientName);
+                    break;
+                case "2":
+                    createLobby(scanner, serverWrapper, clientName);
+                    break;
+                case "0":
+                    System.out.println("Exiting...");
+                    //todo: Hier sollte eigentlich der Spieler gelöscht werden.
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+                    break;
+            }
+        } catch (Exception e) {
+            System.out.println("An error occurred: " + e.getMessage());
         }
     }
 
-    private static void showAvailableLobbies(Scanner scanner, ServerInterface server, String clientName) throws RemoteException {
-        System.out.println("Showing available lobbies...");
-        Map<Long, Lobby> lobbies = server.getLobbies();
+    private static void showAvailableLobbies(Scanner scanner, ServerWrapper serverWrapper, String clientName) {
+        Map<Long, Lobby> lobbies = new HashMap<>();
+        try{
+            lobbies = serverWrapper.getLobbies();
+        } catch (RemoteException e) {
+            System.out.println("Unexpected Error");
+            e.printStackTrace();
+            return;
+        }
 
         if (lobbies.isEmpty()) {
             System.out.println("No available lobbies.");
-            return;
+            return ;
         }
 
         for (Map.Entry<Long, Lobby> entry : lobbies.entrySet()) {
@@ -94,28 +112,53 @@ public class Main {
             return;
         }
 
-        try {
-            server.joinLobby(clientName, Long.valueOf(lobbyIdInput));
+        try{
+            serverWrapper.joinLobby(clientName, Long.valueOf(lobbyIdInput));
             System.out.println("Joined Lobby " + lobbyIdInput);
-            guestLobbyMenu(scanner, server, Long.valueOf(lobbyIdInput));
         } catch (RemoteException e) {
-            System.out.println("Failed to join lobby. Please try again.");
+            String errorMsg = HandleException.handleCauseException(
+                    e.getCause(),
+                    PlayerNotRegisteredException.class,
+                    LobbyLockedException.class,
+                    LobbyFullException.class);
+
+            System.out.println(errorMsg);
         }
+        guestLobbyMenu(scanner, serverWrapper, Long.valueOf(lobbyIdInput), clientName);
     }
 
-    private static void createLobby(Scanner scanner, ServerInterface server, String clientName) throws RemoteException {
-        System.out.println("Creating a new lobby...");
-        LobbyKey lobbyKey = server.createLobby(clientName);
-        System.out.println("Lobby created with ID: " + lobbyKey.lobbyId);
-        ownerLobbyMenu(scanner, server, lobbyKey);
+    private static void createLobby(Scanner scanner, ServerWrapper serverWrapper, String clientName) {
+        LobbyKey lobbyKey = null;
+        try {
+            lobbyKey = serverWrapper.createLobby(clientName);
+        } catch (RemoteException e) {
+            String errorMsg = HandleException.handleCauseException(
+                    e.getCause(),
+                    TooManyLobbiesException.class,
+                    LobbyLockedException.class);
+
+            System.out.println(errorMsg);
+        }
+
+        ownerLobbyMenu(scanner, serverWrapper, lobbyKey, clientName);
     }
 
-    private static void guestLobbyMenu(Scanner scanner, ServerInterface server, Long lobbyId) throws RemoteException {
+    //todo: handle Input from User
+    private static void guestLobbyMenu(Scanner scanner, ServerWrapper serverWrapper, Long lobbyId, String clientName) {
         System.out.println("Guest Lobby Menu: (0) Exit Lobby");
         while (true) {
             String input = scanner.nextLine();
             if (input.equals("0")) {
                 System.out.println("Exiting lobby...");
+                try{
+                    serverWrapper.leaveLobby(clientName);
+                } catch (RemoteException e) {
+                    String errorMsg = HandleException.handleCauseException(
+                            e.getCause(),
+                            LobbyLockedException.class);
+
+                    System.out.println(errorMsg);
+                }
                 break;
             } else {
                 System.out.println("Invalid option. Press 0 to exit.");
@@ -123,32 +166,62 @@ public class Main {
         }
     }
 
-    private static void ownerLobbyMenu(Scanner scanner, ServerInterface server, LobbyKey lobbyKey) throws RemoteException {
+    private static void ownerLobbyMenu(Scanner scanner, ServerWrapper serverWrapper, LobbyKey lobbyKey, String clientName) {
         System.out.println("Owner Lobby Menu: (1) Start Game (0) Exit Lobby");
         String input = scanner.nextLine();
 
         switch (input) {
             case "1":
                 System.out.println("Starting game...");
-                ArrayList<Player> players = server.initializeGameStart(lobbyKey.lobbyId, lobbyKey.secret);
+                ArrayList<Player> players = new ArrayList<>();
+                try{
+                    players = serverWrapper.initializeGameStart(lobbyKey.lobbyId, lobbyKey.secret);
+                } catch (RemoteException e) {
+                    String errorMsg = HandleException.handleCauseException(
+                            e.getCause(),
+                            LobbyKeyIncorrect.class,
+                            NotEnoughPlayersException.class
+                    );
+
+                    System.out.println(errorMsg);
+                    break;
+                }
+
+                // todo: shouldn't, the ckecing if clients are present, be done from server side?
+                // todo: at least that's how we discussed it before (look at the diagram)
+                for (int i = 0; i < players.size(); i++) {
+                    try {
+                        players.get(i).getClient().isPresent();
+                    } catch (RemoteException e) {
+                        System.out.println("Unexpected Error");
+                        break;
+                    }
+                }
+
                 for (int i = 0; i < players.size(); i++) {
                     try {
                         players.get(i).getClient().startGame(players, i);
                     } catch (RemoteException e) {
-                        System.out.println("Failed to start game for player: " + players.get(i).getClientName());
-                        /*
-                         * todo: retry until reached or abort because server provides clientInterfaces ?
-                         *  how can we be sure that nobody reaches this section
-                         */
+                        System.out.println("Unexpected Error. Could not reach player: " + players.get(i).getClientName());
                     }
                 }
                 break;
             case "0":
                 System.out.println("Exiting lobby...");
+                try{
+                    serverWrapper.leaveLobby(clientName);
+                } catch (RemoteException e) {
+                    String errorMsg = HandleException.handleCauseException(
+                            e.getCause(),
+                            LobbyLockedException.class);
+
+                    System.out.println(errorMsg);
+                }
                 break;
             default:
-                System.out.println("Invalid option. Returning to main menu...");
+                System.out.println("Invalid option.");
                 break;
         }
+
     }
 }

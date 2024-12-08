@@ -1,4 +1,4 @@
-package alcatraz.server.rmi;
+package alcatraz.shared.rmi;
 
 import alcatraz.shared.interfaces.ServerInterface;
 
