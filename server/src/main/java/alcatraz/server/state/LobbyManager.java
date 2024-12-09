@@ -50,6 +50,8 @@ public class LobbyManager {
         Lobby newLobby = new Lobby(this.lobbyIdCounter,owner.getClientName(), secretToken);
         lobbies.put(this.lobbyIdCounter, newLobby);
 
+        addPlayerToLobby(newLobby.id, owner);
+
         return new LobbyKey(this.lobbyIdCounter, secretToken);
     }
 
@@ -81,14 +83,15 @@ public class LobbyManager {
     }
 
     public void addPlayerToLobby(long lobbyId, Player player) throws RemoteException {
-        //todo: handle the case that is mentioned below! if the user is in the lobby it wants to join, the function should just return without an error
-        //MM20241124: think about case, where player can already be found in respective lobby!
-        if (lobbyByPlayer.containsKey(player.getClientName())) {
+        Long currentLobbyId = lobbyByPlayer.get(player.getClientName());
+        if (currentLobbyId != null) {
+            if (currentLobbyId == lobbyId) {
+                return;
+            }
             removePlayerFromLobby(player.getClientName());
             System.out.println("Removed player " + player.getClientName() + " from lobby " + lobbyId + ".");
         }
 
-        // todo: the lobby was deleted, because of the case above
         lobbies.get(lobbyId).addPlayer(player);
         lobbyByPlayer.put(player.getClientName(), lobbyId);
 
