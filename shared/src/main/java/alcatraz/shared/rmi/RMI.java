@@ -1,4 +1,4 @@
-package alcatraz.server.rmi;
+package alcatraz.shared.rmi;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

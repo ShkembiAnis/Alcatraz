@@ -9,27 +9,29 @@ import javax.swing.*;
 import java.rmi.RemoteException;
 
 public class AlcatrazMoveListener implements MoveListener {
-    private ClientInterface client;
+    private Client client;
 
-    AlcatrazMoveListener( ClientInterface client){
+    AlcatrazMoveListener(Client client){
         this.client = client;
     }
 
     @Override
     public void moveDone(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) {
-        System.out.println(player.getId() + " moved prisoner " + prisoner + " to position: " + row + ", " + col);
-        // todo: thread safety
+        System.out.println(player.getName() + " moved prisoner " + prisoner + " to position: " + row + ", " + col);
         try {
             client.broadcastMove(player, prisoner, rowOrCol, row, col);
-        } catch (RemoteException e) {
-            System.out.println("Could not reach clients");
-            // todo: do we need to handle this ? like retrying every 5 seconds
+        }catch (RemoteException e){
+            System.out.println("Unexpected error.");
         }
     }
 
     @Override
-    public void gameWon(Player winner) {
-            // return to Menu/Lobby ?
-        System.out.println("Game won by: " + winner.getId());
+    public void gameWon(at.falb.games.alcatraz.api.Player winner) {
+        System.out.println("Game won by: " + winner.getName());
+        try {
+            client.endGame();
+        }catch (RemoteException e){
+            System.out.println("unexpected error.");
+        }
     }
 }
