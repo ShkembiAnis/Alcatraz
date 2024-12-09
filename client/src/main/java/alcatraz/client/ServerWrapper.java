@@ -64,8 +64,8 @@ public class ServerWrapper {
         });
     }
 
-    public Map<Long, Lobby> getLobbies() throws RemoteException {
-        return this.execute(ServerInterface::getLobbies);
+    public Map<Long, Lobby> getLobbies(String clientName) throws RemoteException {
+        return this.execute(server -> server.getLobbies(clientName));
     }
 
     public void leaveLobby(String clientName) throws RemoteException {

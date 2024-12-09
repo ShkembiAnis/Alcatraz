@@ -34,12 +34,12 @@ class ServerTest {
         assertDoesNotThrow(() -> server.registerPlayer(clientName, null));
     }
 
-    private boolean isLobbyExisting(Long lobbyId) {
-        return server.getLobbies().containsKey(lobbyId);
+    private boolean isLobbyExisting(Long lobbyId, String clientName) {
+        return server.getLobbies(clientName).containsKey(lobbyId);
     }
 
     private boolean isPlayerInLobby(Long lobbyId, String playerName) {
-        Optional<Lobby> foundLobby = server.getLobbies().values().stream()
+        Optional<Lobby> foundLobby = server.getLobbies(playerName).values().stream()
                 .filter(lobby -> lobby.id == lobbyId)
                 .findFirst();
 
@@ -79,7 +79,7 @@ class ServerTest {
 
         // create second lobby
         LobbyKey lobbyKey2 = createLobby(lobbyOwner.getClientName());
-        assertFalse(isLobbyExisting(lobbyKey1.lobbyId));
+        assertFalse(isLobbyExisting(lobbyKey1.lobbyId, lobbyOwner.getClientName()));
         assertTrue(isPlayerInLobby(lobbyKey2.lobbyId, lobbyOwner.getClientName()));
     }
 
@@ -107,7 +107,7 @@ class ServerTest {
         assertDoesNotThrow(() -> server.joinLobby(lobbyOwner.getClientName(), lobbyKey.lobbyId));
         assertTrue(isPlayerInLobby(lobbyKey.lobbyId, lobbyOwner.getClientName()));
 
-        Lobby lobby = server.getLobbies().get(lobbyKey.lobbyId);
+        Lobby lobby = server.getLobbies(lobbyOwner.getClientName()).get(lobbyKey.lobbyId);
         assertEquals(lobby.getPlayers().size(), 1);
     }
 

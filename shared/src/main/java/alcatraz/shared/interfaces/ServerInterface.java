@@ -14,7 +14,8 @@ public interface ServerInterface extends Remote {
     LobbyKey createLobby(String ownerName) throws RemoteException;
     void joinLobby(String clientName, Long lobbyId) throws RemoteException;
     void leaveLobby(String clientName) throws RemoteException;
-    Map<Long, Lobby> getLobbies() throws RemoteException;
+    Map<Long, Lobby> getLobbies(String clientName) throws RemoteException;
+
     ArrayList<Player> initializeGameStart(long lobbyId, String secret) throws RemoteException;
     // TODO: leave lobby, remove lobby
 }
