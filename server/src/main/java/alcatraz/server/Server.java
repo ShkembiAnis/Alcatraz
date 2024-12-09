@@ -65,8 +65,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         LobbyKey key = this.state.lobbyManager.createLobby(this.state.players.get(ownerName));
         System.out.println("Lobby " + key.lobbyId + " created by player " + ownerName);
 
-        this.state.lobbyManager.addPlayerToLobby(key.lobbyId, this.state.players.get(ownerName));       //MM20241127: cannot throw
-
         this.replication.replicatePrimaryState();
 
         fairLock.unlock();
