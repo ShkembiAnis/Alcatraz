@@ -60,7 +60,7 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
     public void replicatePrimaryState() {
         ReplicationDTO replicationDTO = new ReplicationDTO(this.sharedState.lobbyManager.getAllLobbies(), this.sharedState.players);
         SpreadMessage msg = new SpreadMessage();
-        msg.setReliable();
+        msg.setSafe();
         msg.addGroup(spread.groupName);
         msg.setSelfDiscard(true);
 
