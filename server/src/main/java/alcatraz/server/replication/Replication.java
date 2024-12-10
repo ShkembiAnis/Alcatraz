@@ -55,7 +55,7 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
     @Override
     public void replicatePrimaryState() {
         SpreadMessage msg = new SpreadMessage();
-        msg.setReliable();
+        msg.setSafe();
         msg.addGroup(spread.groupName);
         msg.setSelfDiscard(true);
 
