@@ -61,11 +61,16 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
     @Override
     public void endGame() throws RemoteException{
+        try {
+            Thread.sleep(5000);
+
+        }catch (InterruptedException e) {
+            System.err.println("The delay was interrupted: " + e.getMessage());
+            Thread.currentThread().interrupt();
+        }
         this.alcatraz.closeWindow();
         this.alcatraz.disposeWindow();
         this.alcatraz.removeMoveListener(this.alcatrazMoveListener);
-        this.lobbyPlayers = null;
-        this.alcatrazMoveListener = null;
     }
 
     @Override
@@ -74,7 +79,9 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
         this.alcatrazMoveListener = new AlcatrazMoveListener(this);
         this.lobbyPlayers = players;
         this.alcatraz.init(players.size(), myLobbyPlayerId);
-        this.alcatraz.getPlayer(myLobbyPlayerId).setName(clientName);
+        for (int i = 0; i < players.size(); i++) {
+            this.alcatraz.getPlayer(i).setName(players.get(i).getClientName());
+        }
         this.alcatraz.addMoveListener(this.alcatrazMoveListener);
         this.alcatraz.showWindow();
         this.alcatraz.start();
@@ -83,7 +90,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
     @Override
     public void doMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
-        System.out.println("Move received from Player " + player.getId() + ": " + "Prisoner " + prisoner.getId() + " to (" + row + ", " + col + ")");
+        System.out.println("Move received from Player " + player.getName() + ": " + "Prisoner " + prisoner.getId() + " to (" + row + ", " + col + ")");
         try{
             this.alcatraz.doMove(player, prisoner, rowOrCol, row, col);
         }catch (IllegalMoveException e) {
