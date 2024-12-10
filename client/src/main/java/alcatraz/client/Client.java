@@ -60,20 +60,6 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
     }
 
     @Override
-    public void endGame() throws RemoteException{
-        try {
-            Thread.sleep(5000);
-
-        }catch (InterruptedException e) {
-            System.err.println("The delay was interrupted: " + e.getMessage());
-            Thread.currentThread().interrupt();
-        }
-        this.alcatraz.closeWindow();
-        this.alcatraz.disposeWindow();
-        this.alcatraz.removeMoveListener(this.alcatrazMoveListener);
-    }
-
-    @Override
     public void startGame(ArrayList<Player> players, int myLobbyPlayerId) throws RemoteException {
         this.alcatraz = new Alcatraz();
         this.alcatrazMoveListener = new AlcatrazMoveListener(this);
