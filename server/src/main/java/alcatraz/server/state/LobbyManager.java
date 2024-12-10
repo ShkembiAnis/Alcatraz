@@ -2,7 +2,9 @@ package alcatraz.server.state;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import alcatraz.shared.utils.Lobby;
@@ -12,8 +14,8 @@ import alcatraz.shared.exceptions.TooManyLobbiesException;
 import alcatraz.shared.utils.Player;
 
 public class LobbyManager implements Serializable {
-    private HashMap<Long, Lobby> lobbies = new HashMap<>();
-    private HashMap<String, Long> lobbyByPlayer = new HashMap<>();
+    private Map<Long, Lobby> lobbies = Collections.synchronizedMap(new HashMap());
+    private Map<String, Long> lobbyByPlayer = Collections.synchronizedMap(new HashMap());
     private long lobbyIdCounter = 0;        //MM20241205: 0 is a magic number for the client; however, will be checked
                                             //              upon calculation.
     private static final long MAXSIZE = 100;
@@ -60,14 +62,14 @@ public class LobbyManager implements Serializable {
         lobbies.remove(lobbyId);
     }
 
-    public void setLobbies(HashMap<Long, Lobby> lobbies) {
+    public void setLobbies(Map<Long, Lobby> lobbies) {
         this.lobbies = lobbies; // added for updating local state when primary updates backups;
     }
 
-    public HashMap<Long, Lobby> getAllLobbies() { return lobbies; }
+    public Map<Long, Lobby> getAllLobbies() { return lobbies; }
 
-    public HashMap<Long, Lobby> getAvailableLobbies() {
-        HashMap<Long, Lobby>    availableLobbies = new HashMap<>();
+    public Map<Long, Lobby> getAvailableLobbies() {
+        Map<Long, Lobby>    availableLobbies = new HashMap<>();
 
         for (Long lobbyId : lobbies.keySet()) {
             final Lobby currentLobby = lobbies.get(lobbyId);
