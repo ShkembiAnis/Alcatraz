@@ -1,20 +1,16 @@
 package alcatraz.server.replication;
 
-import alcatraz.server.replication.dto.ReplicationDTO;
+import alcatraz.server.state.LobbyManager;
 import alcatraz.shared.rmi.RMIManager;
 import alcatraz.server.spread.Spread;
 import alcatraz.server.state.SharedState;
-import alcatraz.shared.utils.Lobby;
-import alcatraz.shared.utils.Player;
 import alcatraz.shared.interfaces.ServerInterface;
+import alcatraz.shared.utils.Player;
 import spread.*;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Comparator;
+import java.util.*;
 
 public class Replication implements ReplicationInterface, AdvancedMessageListener {
 
@@ -36,8 +32,8 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
     }
 
 
-    private void setSharedState(HashMap<Long, Lobby> lobbies, HashMap<String, Player> players) {
-        this.sharedState.lobbyManager.setLobbies(lobbies);
+    private void setSharedState(LobbyManager lobbyManager, HashMap<String, Player> players) {
+        this.sharedState.lobbyManager = lobbyManager;
         this.sharedState.players = players;
     }
 
@@ -58,14 +54,13 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
 
     @Override
     public void replicatePrimaryState() {
-        ReplicationDTO replicationDTO = new ReplicationDTO(this.sharedState.lobbyManager.getAllLobbies(), this.sharedState.players);
         SpreadMessage msg = new SpreadMessage();
         msg.setReliable();
         msg.addGroup(spread.groupName);
         msg.setSelfDiscard(true);
 
         try {
-            msg.setObject(replicationDTO);
+            msg.setObject(this.sharedState);
         } catch (SpreadException e) {
             System.out.println("Setting a content of the message failed!");
             e.printStackTrace();
@@ -89,14 +84,13 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
             e.printStackTrace();
         }
 
-        if (!(receivedObject instanceof ReplicationDTO replicationDTO)) {
+        if (!(receivedObject instanceof SharedState sharedState)) {
             System.out.println("Incorrect type received by replica!");
             return;
         }
 
-        this.setSharedState(replicationDTO.getLobbies(), replicationDTO.getPlayers());
+        this.setSharedState(sharedState.lobbyManager, sharedState.players);
         System.out.println(this.serverId + " updated state from primary server.");
-
     }
 
     @Override
@@ -129,6 +123,7 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
         } catch (UnknownHostException e) {
             System.out.println("Address of the server daemon not known!");
             e.printStackTrace();
+            return;
         }
 
         try {
@@ -136,6 +131,7 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
         } catch (SpreadException e) {
             System.out.printf("Connection to the spread daemon %s:%s failed!", spread.host, spread.port);
             e.printStackTrace();
+            return;
         }
 
         spread.connection.add(this);
@@ -144,6 +140,7 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
             group.join(spread.connection, spread.groupName);
         } catch (SpreadException e) {
             System.out.printf("Joining the spread group %s failed!", spread.groupName);
+            return;
         }
 
         System.out.println(this.serverId + " joined the group.");

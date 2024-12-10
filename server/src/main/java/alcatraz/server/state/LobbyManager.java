@@ -1,5 +1,6 @@
 package alcatraz.server.state;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.UUID;
@@ -10,7 +11,7 @@ import alcatraz.shared.exceptions.LobbyLockedException;
 import alcatraz.shared.exceptions.TooManyLobbiesException;
 import alcatraz.shared.utils.Player;
 
-public class LobbyManager {
+public class LobbyManager implements Serializable {
     private HashMap<Long, Lobby> lobbies = new HashMap<>();
     private HashMap<String, Long> lobbyByPlayer = new HashMap<>();
     private long lobbyIdCounter = 0;        //MM20241205: 0 is a magic number for the client; however, will be checked
