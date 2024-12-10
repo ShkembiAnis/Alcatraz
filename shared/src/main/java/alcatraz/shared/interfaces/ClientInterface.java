@@ -12,5 +12,4 @@ public interface ClientInterface extends Remote {
     void doMove(Player playerId, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException;
     void broadcastMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException;
     void isPresent() throws RemoteException;
-    void endGame()throws RemoteException;
 }

@@ -105,7 +105,16 @@ public class Main {
         }
 
         System.out.print("Enter a Lobby ID to join (0 to cancel): ");
-        String lobbyIdInput = scanner.nextLine();
+        String lobbyIdInput;
+
+        while(true){
+            lobbyIdInput = getNumberInput();
+            if(lobbies.containsKey(Long.parseLong(lobbyIdInput))){
+                break;
+            }else{
+                System.out.println("Lobby mit der ID " + lobbyIdInput + " existiert nicht.");
+            }
+        }
 
         if (lobbyIdInput.equals("0")) {
             System.out.println("Returning to main menu...");
@@ -167,61 +176,81 @@ public class Main {
     }
 
     private static void ownerLobbyMenu(Scanner scanner, ServerWrapper serverWrapper, LobbyKey lobbyKey, String clientName) {
-        System.out.println("Owner Lobby Menu: (1) Start Game (0) Exit Lobby");
-        String input = scanner.nextLine();
 
-        switch (input) {
-            case "1":
-                System.out.println("Starting game...");
-                ArrayList<Player> players = new ArrayList<>();
-                try{
-                    players = serverWrapper.initializeGameStart(lobbyKey.lobbyId, lobbyKey.secret);
-                } catch (RemoteException e) {
-                    String errorMsg = HandleException.handleCauseException(
-                            e.getCause(),
-                            LobbyKeyIncorrect.class,
-                            NotEnoughPlayersException.class
-                    );
-
-                    System.out.println(errorMsg);
-                    break;
-                }
-
-                // todo: shouldn't, the ckecing if clients are present, be done from server side?
-                // todo: at least that's how we discussed it before (look at the diagram)
-                for (int i = 0; i < players.size(); i++) {
-                    try {
-                        players.get(i).getClient().isPresent();
+        boolean inLobby = true;
+        while(inLobby){
+            System.out.println("Owner Lobby Menu: (1) Start Game (0) Exit Lobby");
+            String input = scanner.nextLine();
+            switch (input) {
+                case "1":
+                    System.out.println("Starting game...");
+                    ArrayList<Player> players = new ArrayList<>();
+                    try{
+                        players = serverWrapper.initializeGameStart(lobbyKey.lobbyId, lobbyKey.secret);
                     } catch (RemoteException e) {
-                        System.out.println("Unexpected Error");
+                        String errorMsg = HandleException.handleCauseException(
+                                e.getCause(),
+                                LobbyKeyIncorrect.class,
+                                NotEnoughPlayersException.class
+                        );
+                        System.out.println(errorMsg);
                         break;
                     }
-                }
 
-                for (int i = 0; i < players.size(); i++) {
-                    try {
-                        players.get(i).getClient().startGame(players, i);
-                    } catch (RemoteException e) {
-                        System.out.println("Unexpected Error. Could not reach player: " + players.get(i).getClientName());
+                    // todo: shouldn't, the ckecing if clients are present, be done from server side?
+                    // todo: at least that's how we discussed it before (look at the diagram)
+                    for (int i = 0; i < players.size(); i++) {
+                        try {
+                            players.get(i).getClient().isPresent();
+                        } catch (RemoteException e) {
+                            System.out.println("Unexpected Error");
+                            break;
+                        }
                     }
-                }
-                break;
-            case "0":
-                System.out.println("Exiting lobby...");
-                try{
-                    serverWrapper.leaveLobby(clientName);
-                } catch (RemoteException e) {
-                    String errorMsg = HandleException.handleCauseException(
-                            e.getCause(),
-                            LobbyLockedException.class);
 
-                    System.out.println(errorMsg);
-                }
-                break;
-            default:
-                System.out.println("Invalid option.");
-                break;
+                    for (int i = 0; i < players.size(); i++) {
+                        try {
+                            players.get(i).getClient().startGame(players, i);
+                        } catch (RemoteException e) {
+                            System.out.println("Unexpected Error. Could not reach player: " + players.get(i).getClientName());
+                            break;
+                        }
+                    }
+                    inLobby = false;
+                    break;
+                case "0":
+                    System.out.println("Exiting lobby...");
+                    try{
+                        serverWrapper.leaveLobby(clientName);
+
+                    } catch (RemoteException e) {
+                        String errorMsg = HandleException.handleCauseException(
+                                e.getCause(),
+                                LobbyLockedException.class);
+                        System.out.println(errorMsg);
+                        break;
+                    }
+                    inLobby = false;
+                    break;
+                default:
+                    System.out.println("Invalid option.");
+                    break;
+            }
         }
 
+
+    }
+
+    private static String getNumberInput(){
+        Scanner scanner = new Scanner(System.in);
+        while(true){
+            try{
+                long longInput = Long.parseLong(scanner.nextLine());
+                return Long.toString(longInput);
+            }catch(Exception e){
+                System.out.println("Invalid input. Input has to be a number.");
+            }
+        }
     }
 }
+

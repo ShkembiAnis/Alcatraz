@@ -28,10 +28,5 @@ public class AlcatrazMoveListener implements MoveListener {
     @Override
     public void gameWon(at.falb.games.alcatraz.api.Player winner) {
         System.out.println("Game won by: " + winner.getName());
-        try {
-            client.endGame();
-        }catch (RemoteException e){
-            System.out.println("unexpected error.");
-        }
     }
 }
