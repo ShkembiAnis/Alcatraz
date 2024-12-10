@@ -62,6 +62,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
         fairLock.lock();
 
+        if (!isPlayerRegistered(ownerName)) {
+            fairLock.unlock();
+            throw new PlayerNotRegisteredException("Unregistered player '" + ownerName + "' cannot create lobby");
+        }
+
         LobbyKey key = this.state.lobbyManager.createLobby(this.state.players.get(ownerName));
         System.out.println("Lobby " + key.lobbyId + " created by player " + ownerName);
 
@@ -107,6 +112,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
         this.fairLock.lock();
 
+        if (!isPlayerRegistered(clientName)) {
+            fairLock.unlock();
+            throw new PlayerNotRegisteredException(clientName);
+        }
+
         this.state.lobbyManager.removePlayerFromLobby(clientName);
 
         this.replication.replicatePrimaryState();
@@ -115,7 +125,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     }
 
     @Override
-    public Map<Long, Lobby> getLobbies() {
+    public Map<Long, Lobby> getLobbies(String clientName) throws RemoteException {
+        if (!isPlayerRegistered(clientName)) {
+            fairLock.unlock();
+            throw new PlayerNotRegisteredException(clientName);
+        }
+
         return this.state.lobbyManager.getAvailableLobbies();
     }
 
@@ -131,8 +146,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
             fairLock.unlock();
             throw new LobbyKeyIncorrect();
         }
-
-
 
         this.removeUnavailablePlayersFromLobby(gameLobby);
 

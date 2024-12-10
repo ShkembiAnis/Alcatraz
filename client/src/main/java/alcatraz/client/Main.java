@@ -87,7 +87,7 @@ public class Main {
     private static void showAvailableLobbies(Scanner scanner, ServerWrapper serverWrapper, String clientName) {
         Map<Long, Lobby> lobbies = new HashMap<>();
         try{
-            lobbies = serverWrapper.getLobbies();
+            lobbies = serverWrapper.getLobbies(clientName);
         } catch (RemoteException e) {
             System.out.println("Unexpected Error");
             e.printStackTrace();
