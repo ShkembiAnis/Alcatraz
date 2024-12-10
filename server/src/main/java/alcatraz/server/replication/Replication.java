@@ -95,17 +95,27 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
         }
 
         this.setSharedState(replicationDTO.getLobbies(), replicationDTO.getPlayers());
-        System.out.println(this.serverId + " updated lobbies from primary server.");
+        System.out.println(this.serverId + " updated state from primary server.");
 
     }
 
     @Override
     public void membershipMessageReceived(SpreadMessage message) {
+        System.out.println("Membership change detected.");
+        System.out.println("Current server ID: " + this.serverId);
+
         MembershipInfo info = message.getMembershipInfo();
-        if (info.isCausedByJoin() || info.isCausedByLeave() || info.isCausedByDisconnect() || info.isCausedByNetwork()) {
-            System.out.println("Membership change detected.");
-            System.out.println("Current server ID: " + this.serverId);
-            List<Integer> availableServerIds = getAvailableServers(info);
+        List<Integer> availableServerIds = getAvailableServers(info);
+
+        if (info.isCausedByJoin()) {
+            System.out.println("Server joined the group.");
+            if (this.isPrimary) {
+                replicatePrimaryState();
+            }
+            electNewPrimary(availableServerIds);
+        }
+
+        if (info.isCausedByLeave() || info.isCausedByDisconnect() || info.isCausedByNetwork()) {
             electNewPrimary(availableServerIds);
         }
     }
@@ -170,9 +180,6 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
         if (this.serverId == lowestID) {
             this.isPrimary = true;
             System.out.println(this.serverId + " is now the primary server.");
-
-            // As the new primary, update backup servers with the current lobbies
-            replicatePrimaryState();
         } else {
             this.isPrimary = false;
             System.out.println(this.serverId + " is a backup server.");
