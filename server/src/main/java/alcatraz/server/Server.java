@@ -179,25 +179,30 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
 
     private void removeUnavailablePlayersFromLobby(Lobby gameLobby) {
-        gameLobby.getPlayers().forEach((playerName, player) -> {
+        for (Map.Entry<String, Player> entry : gameLobby.getPlayers().entrySet()) {
+            Player player = entry.getValue();
+            String playerName = entry.getKey();
+
+            ClientInterface client = player.getClient();
             try {
-                ClientInterface client = player.getClient();
                 if (client != null) {
                     System.out.println("Starting game for client: " + player.getClientName() + " in lobby " + gameLobby.getId());
-//                    client.startGame(gameLobby);        //MM20241127: after today's discussion, this must be renamed to "isPresent()"
+                    client.isPresent(); // MM20241127: after today's discussion, this must be renamed to "isPresent()"
                 } else {
                     gameLobby.removePlayer(playerName, true);
                     System.out.println("ClientInterface not found for player: " + player.getClientName());
                 }
-            } catch (LobbyLockedException e) { //MM20241128: do nothing when removePlayer fails?
-//                TODO: Uncomment when the client implements the isPresent() method
-//            } catch (RemoteException e) {
-//                try {
-//                    gameLobby.removePlayer(playerName, true);      //MM20241127: "true" prevents from exception
-//                } catch (LobbyLockedException e1) { //MM20241128: do nothing when removePlayer fails?
-//                }
+            } catch (RemoteException e) {
+                System.out.println("Client" + playerName +  " not present");
+                try {
+                    gameLobby.removePlayer(playerName, true); // MM20241127: "true" prevents from exception
+                } catch (LobbyLockedException e1) {
+                    System.out.println(e1.getMessage());
+                }
             }
-        });
+        }
+
+        System.out.println("etwas");
     }
 
 }

@@ -197,17 +197,6 @@ public class Main {
                         break;
                     }
 
-                    // todo: shouldn't, the ckecing if clients are present, be done from server side?
-                    // todo: at least that's how we discussed it before (look at the diagram)
-                    for (int i = 0; i < players.size(); i++) {
-                        try {
-                            players.get(i).getClient().isPresent();
-                        } catch (RemoteException e) {
-                            System.out.println("Unexpected Error");
-                            break;
-                        }
-                    }
-
                     for (int i = 0; i < players.size(); i++) {
                         try {
                             players.get(i).getClient().startGame(players, i);
