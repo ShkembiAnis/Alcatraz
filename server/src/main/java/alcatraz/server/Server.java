@@ -125,7 +125,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     }
 
     @Override
-    public Map<Long, Lobby> getLobbies(String clientName) {
+    public Map<Long, Lobby> getLobbies(String clientName) throws RemoteException {
+        if (!isPlayerRegistered(clientName)) {
+            fairLock.unlock();
+            throw new PlayerNotRegisteredException(clientName);
+        }
+
         return this.state.lobbyManager.getAvailableLobbies();
     }
 
