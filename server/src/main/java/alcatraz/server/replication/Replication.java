@@ -32,7 +32,7 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
     }
 
 
-    private void setSharedState(LobbyManager lobbyManager, HashMap<String, Player> players) {
+    private void setSharedState(LobbyManager lobbyManager, Map<String, Player> players) {
         this.sharedState.lobbyManager = lobbyManager;
         this.sharedState.players = players;
     }
