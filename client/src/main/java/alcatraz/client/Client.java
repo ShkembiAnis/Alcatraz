@@ -12,15 +12,12 @@ import at.falb.games.alcatraz.api.IllegalMoveException;
 import at.falb.games.alcatraz.api.Prisoner;
 
 public class Client extends UnicastRemoteObject implements ClientInterface {
-    private String clientId;
     private String clientName;
-    private String client_ip_address;
-    private String client_port;
     private ArrayList<Player> lobbyPlayers;
     private Alcatraz alcatraz;
     private AlcatrazMoveListener alcatrazMoveListener;
-
     private ServerInterface server;
+    private Move currentMove = null;
 
     public Client(ServerInterface server, String clientName) throws RemoteException {
         this.server = server;
@@ -30,33 +27,60 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
 
     @Override
-        public synchronized void broadcastMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
-            for(Player playerEntry : lobbyPlayers){
-                if(!playerEntry.getClientName().equals(clientName)){
-                    boolean moveDeliverd = false;
-                    while(!moveDeliverd){
-                        try {
-                            playerEntry.getClient().doMove(player, prisoner, rowOrCol, row, col);
-                            moveDeliverd = true;
+    public synchronized void broadcastMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
+        for(Player playerEntry : lobbyPlayers){
+            if(!playerEntry.getClientName().equals(clientName)){
+                boolean moveDeliverd = false;
+                while(!moveDeliverd){
+                    try {
+                        playerEntry.getClient().setMove(player, prisoner, rowOrCol, row, col);
+                        moveDeliverd = true;
+                        break;
+                    }catch (RemoteException e){
+                        System.out.println(playerEntry.getClientName() + " could not be reached. Game paused. Retrying in 5 seconds.");
+                        try{
+                            Thread.sleep(2000);
+                        }catch (InterruptedException ex) {
+                            System.out.println("Unexpected error");
+                            Thread.currentThread().interrupt(); // Restore the interrupted status
                             break;
-                        }catch (RemoteException e){
-                            System.out.println(playerEntry.getClientName() + " could not be reached. Game paused. Retrying in 5 seconds.");
-                            try{
-                                Thread.sleep(5000);
-                            }catch (InterruptedException ex) {
-                                System.out.println("Unexpected error");
-                                Thread.currentThread().interrupt(); // Restore the interrupted status
-                                break;
-                            }
                         }
                     }
                 }
             }
         }
 
+        for(Player playerEntry : lobbyPlayers){
+            if(!playerEntry.getClientName().equals(clientName)){
+                boolean moveDone = false;
+                while(!moveDone){
+                    try {
+                        playerEntry.getClient().doMove();
+                        moveDone = true;
+                        break;
+                    }catch (RemoteException e){
+                        System.out.println(playerEntry.getClientName() + " could not be reached. Game paused. Retrying in 5 seconds.");
+                        try{
+                            Thread.sleep(2000);
+                        }catch (InterruptedException ex) {
+                            System.out.println("Unexpected error");
+                            Thread.currentThread().interrupt(); // Restore the interrupted status
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public void isPresent() throws RemoteException {
         System.out.println("Client " + this.clientName + " is present");
+    }
+
+    @Override
+    public void setMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
+        this.currentMove = new Move(player,prisoner, rowOrCol, row, col);
     }
 
     @Override
@@ -75,13 +99,17 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
     }
 
     @Override
-    public void doMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
-        System.out.println("Move received from Player " + player.getName() + ": " + "Prisoner " + prisoner.getId() + " to (" + row + ", " + col + ")");
-        try{
-            this.alcatraz.doMove(player, prisoner, rowOrCol, row, col);
-        }catch (IllegalMoveException e) {
-            throw new RuntimeException(e);
+    public void doMove() throws RemoteException {
+        if(currentMove != null){
+            System.out.println("Move received from Player " + this.currentMove.getPlayer().getName() + ": " + "Prisoner " + this.currentMove.getPrisoner().getId() + " to (" + this.currentMove.getRow() + ", " + this.currentMove.getCol() + ")");
+            try{
+                this.alcatraz.doMove(this.currentMove.getPlayer(), this.currentMove.getPrisoner(), this.currentMove.getRowOrCol(), this.currentMove.getRow(), this.currentMove.getCol());
+                this.currentMove = null;
+            }catch (IllegalMoveException e) {
+                throw new RuntimeException(e);
+            }
+        }else{
+            System.out.println("Move is not set.");
         }
     }
-
 }
