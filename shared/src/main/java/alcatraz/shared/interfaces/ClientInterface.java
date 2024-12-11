@@ -9,7 +9,8 @@ import java.util.ArrayList;
 
 public interface ClientInterface extends Remote {
     void startGame(ArrayList<alcatraz.shared.utils.Player> players, int myLobbyPlayerId) throws RemoteException;
-    void doMove(Player playerId, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException;
+    void doMove() throws RemoteException;
     void broadcastMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException;
     void isPresent() throws RemoteException;
+    void setMove(Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException;
 }
