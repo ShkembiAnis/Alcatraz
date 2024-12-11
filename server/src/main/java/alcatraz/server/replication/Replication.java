@@ -14,8 +14,7 @@ import java.util.*;
 
 public class Replication implements ReplicationInterface, AdvancedMessageListener {
 
-    // TODO: name is not relevant I think, ID would be enough, should they not be final?
-    public int serverId;
+    public final int serverId;
     private boolean isPrimary;
 
     private final SharedState sharedState;
@@ -89,7 +88,9 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
             return;
         }
 
-        this.setSharedState(sharedState.lobbyManager, sharedState.players);
+        synchronized (this.sharedState) {
+            this.setSharedState(sharedState.lobbyManager, sharedState.players);
+        }
         System.out.println(this.serverId + " updated state from primary server.");
     }
 
@@ -171,7 +172,9 @@ public class Replication implements ReplicationInterface, AdvancedMessageListene
                 min(Comparator.naturalOrder()).
                 orElseThrow(() -> new IllegalStateException("No available players found"));
 
-        rmiManager.setPrimaryServer(lowestID);
+        synchronized (rmiManager)  {
+            rmiManager.setPrimaryServer(lowestID);
+        }
 
         System.out.println("Elected primary: " + lowestID);
         if (this.serverId == lowestID) {

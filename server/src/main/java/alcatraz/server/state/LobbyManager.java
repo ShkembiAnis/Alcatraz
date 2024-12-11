@@ -14,8 +14,8 @@ import alcatraz.shared.exceptions.TooManyLobbiesException;
 import alcatraz.shared.utils.Player;
 
 public class LobbyManager implements Serializable {
-    private Map<Long, Lobby> lobbies = Collections.synchronizedMap(new HashMap());
-    private Map<String, Long> lobbyByPlayer = Collections.synchronizedMap(new HashMap());
+    private final Map<Long, Lobby> lobbies = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, Long> lobbyByPlayer = Collections.synchronizedMap(new HashMap<>());
     private long lobbyIdCounter = 0;        //MM20241205: 0 is a magic number for the client; however, will be checked
                                             //              upon calculation.
     private static final long MAXSIZE = 100;
@@ -60,10 +60,6 @@ public class LobbyManager implements Serializable {
 
     private void removeLobby(long lobbyId) {
         lobbies.remove(lobbyId);
-    }
-
-    public void setLobbies(Map<Long, Lobby> lobbies) {
-        this.lobbies = lobbies; // added for updating local state when primary updates backups;
     }
 
     public Map<Long, Lobby> getAllLobbies() { return lobbies; }
