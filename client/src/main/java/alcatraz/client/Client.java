@@ -28,49 +28,8 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
     @Override
     public synchronized void broadcastMove(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) throws RemoteException {
-        for(Player playerEntry : lobbyPlayers){
-            if(!playerEntry.getClientName().equals(clientName)){
-                boolean moveDeliverd = false;
-                while(!moveDeliverd){
-                    try {
-                        playerEntry.getClient().setMove(player, prisoner, rowOrCol, row, col);
-                        moveDeliverd = true;
-                        break;
-                    }catch (RemoteException e){
-                        System.out.println(playerEntry.getClientName() + " could not be reached. Game paused. Retrying in 5 seconds.");
-                        try{
-                            Thread.sleep(2000);
-                        }catch (InterruptedException ex) {
-                            System.out.println("Unexpected error");
-                            Thread.currentThread().interrupt(); // Restore the interrupted status
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        for(Player playerEntry : lobbyPlayers){
-            if(!playerEntry.getClientName().equals(clientName)){
-                boolean moveDone = false;
-                while(!moveDone){
-                    try {
-                        playerEntry.getClient().doMove();
-                        moveDone = true;
-                        break;
-                    }catch (RemoteException e){
-                        System.out.println(playerEntry.getClientName() + " could not be reached. Game paused. Retrying in 5 seconds.");
-                        try{
-                            Thread.sleep(2000);
-                        }catch (InterruptedException ex) {
-                            System.out.println("Unexpected error");
-                            Thread.currentThread().interrupt(); // Restore the interrupted status
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        transmitMoveToAllPlayers(player, prisoner, rowOrCol, row, col);
+        executeMoveByAllPlayers();
     }
 
     @Override
@@ -110,6 +69,50 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
             }
         }else{
             System.out.println("Move is not set.");
+        }
+    }
+
+    private void transmitMoveToAllPlayers(at.falb.games.alcatraz.api.Player player, Prisoner prisoner, int rowOrCol, int row, int col) {
+        for (Player playerEntry : lobbyPlayers) {
+            if (!playerEntry.getClientName().equals(clientName)) {
+                while (true) {
+                    try {
+                        playerEntry.getClient().setMove(player, prisoner, rowOrCol, row, col);
+                        break;
+                    } catch (RemoteException e) {
+                        System.out.println(playerEntry.getClientName() + " could not be reached. Game paused. Retrying in 2 seconds.");
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException ex) {
+                            System.out.println("Unexpected error");
+                            Thread.currentThread().interrupt(); // Restore the interrupted status
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void executeMoveByAllPlayers() {
+        for (Player playerEntry : lobbyPlayers) {
+            if (!playerEntry.getClientName().equals(clientName)) {
+                while (true) {
+                    try {
+                        playerEntry.getClient().doMove();
+                        break;
+                    } catch (RemoteException e) {
+                        System.out.println(playerEntry.getClientName() + " could not be reached. Game paused. Retrying in 2 seconds.");
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException ex) {
+                            System.out.println("Unexpected error");
+                            Thread.currentThread().interrupt(); // Restore the interrupted status
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 }
